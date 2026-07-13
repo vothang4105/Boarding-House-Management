@@ -72,3 +72,6 @@ Dự án được định hướng phát triển bền vững, dễ mở rộng 
 ### 3.5. Tích hợp bên thứ ba & Triển khai (Integrations & DevOps)
 * **Payment Gateway:** **VNPay Sandbox API** (môi trường thử nghiệm tích hợp mã giao dịch `vnp_TxnRef`, kiểm tra chữ ký bảo mật `vnp_SecureHash` và xử lý IPN URL).
 * **Quản lý mã nguồn:** **Git & GitHub** tuân thủ quy trình GitFlow tiêu chuẩn (nhánh `main`, `develop`, và các `feature/*`).
+
+### 3.6 Test Code 
+Test commit 
