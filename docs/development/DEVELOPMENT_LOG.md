@@ -173,3 +173,52 @@
 ### 4. Đánh giá sẵn sàng cho Ngày 3 (DAY-003)
 - Cấu trúc Monorepo, nhánh làm việc `develop` và quy chuẩn commit đã hoàn toàn sẵn sàng.
 - Sẵn sàng bước sang **Ngày 3:** Xây dựng khung Ma trận truy vết yêu cầu (Requirement Traceability Matrix - RTM) để liên kết 48 FRs, 14 BRs và 13 NFRs với các Use Cases và Modules kỹ thuật.
+
+
+## [DAY-003] - 2026-11-15 - Xây dựng Ma trận Truy vết Yêu cầu (Requirement Traceability Matrix - RTM)
+
+### 1. Thông tin chung
+- **Task ID:** DAY-003
+- **Trạng thái:** COMPLETED
+- **Vai trò thực hiện:** Developer Agent / BA
+- **Tài liệu căn cứ:** `docs/planning/daily-plans/DAY-003.md`, `docs/requirements/SRS.md`, `docs/planning/MASTER_PLAN.md`
+
+---
+
+### 2. Chi tiết kết quả thực hiện
+
+#### Task 1: Thiết kế Cấu trúc Ma trận RTM Đa chiều
+- Đã thiết lập tài liệu ma trận truy vết chuẩn tại [`docs/requirements/RTM.md`](file:///d:/TaDuss/Boarding-House-Management/docs/requirements/RTM.md).
+- Cấu trúc trường dữ liệu bao quát 9 chiều:
+  `Mã Yêu cầu` | `Tên Yêu cầu` | `MoSCoW (M/S)` | `Actor chính` | `Thực thể Dữ liệu (Entities)` | `Quy tắc Nghiệp vụ (BR)` | `Milestone Triển khai (Sprint/Ngày)` | `Phương pháp Kiểm chứng`.
+
+#### Task 2: Ánh xạ Toàn diện 48 Yêu cầu Chức năng (FR-01 đến FR-48)
+Đã hoàn thành ánh xạ 100% 48 yêu cầu chức năng theo 8 module nghiệp vụ:
+1. **Module 1 (Quản lý Nhà & Phòng - FR-01 -> FR-06):** 5 Must-have, 1 Should-have; liên kết thực thể `Building`, `Room`, `RoomImage`; ràng buộc quy tắc sức chứa BR-06, trạng thái BR-10, phân quyền dãy BR-14; triển khai tại Sprint 1 (Ngày 38, 39).
+2. **Module 2 (Khách thuê & Hợp đồng - FR-07 -> FR-14):** 8/8 Must-have; liên kết thực thể `Tenant`, `Contract`, `ContractMember`; ràng buộc duy nhất CCCD BR-13, đặt cọc BR-09, phạt cọc 50% BR-11, bảo mật signed URL NFR-06; triển khai tại Sprint 1 (Ngày 40 - 44).
+3. **Module 3 (Chỉ số Điện & Nước - FR-15 -> FR-20):** 4 Must-have, 2 Should-have; liên kết thực thể `ElectricityReading`; ràng buộc công thức điện BR-01, nước khoán BR-02; tích hợp giải pháp Offline-first với Dexie.js (IndexedDB - NFR-09); triển khai tại Sprint 2 (Ngày 46 - 48).
+4. **Module 4 (Hóa đơn & Thanh toán - FR-21 -> FR-29):** 7 Must-have, 2 Should-have; liên kết thực thể `Invoice`; ràng buộc chu kỳ chốt ngày 28 (BR-07), hạn ngày 5 (BR-08), không lãi phạt v1.0 (BR-09); tích hợp cổng VNPay Sandbox và đối soát IPN callback tự động; triển khai tại Sprint 2 (Ngày 49 - 55).
+5. **Module 5 (Sự cố & Bảo trì - FR-30 -> FR-35):** 5 Must-have, 1 Should-have; liên kết thực thể `Ticket`, `TicketImage`, `TicketComment`; ràng buộc phân quyền dãy BR-14; quản lý vòng đời 4 trạng thái; triển khai tại Sprint 3 (Ngày 56, 57).
+6. **Module 6 (Thông báo & Nhắc nhở - FR-36 -> FR-38):** 2 Must-have, 1 Should-have; liên kết thực thể `Notification`, Resend API service; email tự động hóa đơn, quá hạn 3 ngày, ticket; triển khai tại Sprint 3 (Ngày 58, 59).
+7. **Module 7 (Báo cáo & Dashboard - FR-39 -> FR-43):** 3 Must-have, 2 Should-have; liên kết thực thể `Invoice`, `Room`, `Ticket`; đáp ứng NFR-01 (< 3s Dashboard); Recharts 12 tháng, xuất Excel; triển khai tại Sprint 3 (Ngày 60 - 62).
+8. **Module 8 (Quản trị Người dùng & Bảo mật - FR-44 -> FR-48):** 5/5 Must-have; liên kết thực thể `User`, `BuildingManager`; bảo mật Bcrypt cost $\ge 10$ (NFR-04), JWT token, phân quyền RBAC và cô lập dữ liệu BR-14; triển khai tại Sprint 1 (Ngày 36, 37).
+
+#### Task 3: Ánh xạ 14 Quy tắc Nghiệp vụ & 13 Yêu cầu Phi chức năng
+- **14 Quy tắc Nghiệp vụ (BR-01 đến BR-14):** Xác định rõ cơ chế thực thi kỹ thuật (Database Check Constraint, FluentValidation, Domain Entity Logic, EF Core Global Query Filters, SaveChangesInterceptor).
+- **13 Yêu cầu Phi chức năng (NFR-01 đến NFR-13):** Xác định rõ tầng kiến trúc phụ trách (Web API, Domain, EF Core, Next.js, Supabase) và công cụ đo lường kiểm chứng (BenchmarkDotNet, DevTools, Signed URL TTL, Quartz.NET/Hangfire).
+
+---
+
+### 3. Kiểm chứng & Đo lường Scope (Quality Gate)
+- **Tập tin đã tạo/sửa đổi:**
+  - `docs/requirements/RTM.md` (CREATE)
+  - `docs/planning/daily-plans/DAY-003.md` (CREATE / COMPLETED)
+  - `docs/development/DEVELOPMENT_LOG.md` (APPEND)
+- **Kiểm toán Scope:** Lệnh `scripts/verify-scope.ps1 -PlanFile docs/planning/daily-plans/DAY-003.md` đạt kết quả **`[SCOPE AUDIT PASSED]`**.
+- **Tiêu chí nghiệm thu (Acceptance Criteria):** Đạt 5/5 (100%).
+
+---
+
+### 4. Đánh giá sẵn sàng cho Ngày 4 (DAY-004)
+- Ma trận RTM đã cung cấp bản đồ định hướng chính xác từng Entity, quy tắc và Sprint triển khai.
+- Sẵn sàng bước sang **Ngày 4:** Thiết lập môi trường phát triển local: Kiểm tra .NET 10 SDK, Node.js runtime, Docker Desktop và chạy thử nghiệm PostgreSQL container qua `docker-compose up -d`.
