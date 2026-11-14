@@ -222,3 +222,67 @@
 ### 4. Đánh giá sẵn sàng cho Ngày 4 (DAY-004)
 - Ma trận RTM đã cung cấp bản đồ định hướng chính xác từng Entity, quy tắc và Sprint triển khai.
 - Sẵn sàng bước sang **Ngày 4:** Thiết lập môi trường phát triển local: Kiểm tra .NET 10 SDK, Node.js runtime, Docker Desktop và chạy thử nghiệm PostgreSQL container qua `docker-compose up -d`.
+
+
+## [DAY-004] - 2026-11-15 - Thiết lập Môi trường Phát triển Local & Docker (PostgreSQL, .NET 10, Next.js)
+
+### 1. Thông tin chung
+- **Task ID:** DAY-004
+- **Trạng thái:** COMPLETED
+- **Vai trò thực hiện:** Developer Agent
+- **Tài liệu căn cứ:** `docs/planning/daily-plans/DAY-004.md`, `docker-compose.yml`, `docs/requirements/SRS.md`
+
+---
+
+### 2. Chi tiết kết quả thực hiện
+
+#### Task 1: Kiểm tra Phiên bản Công cụ Môi trường Local
+- **.NET SDK:** `10.0.402` (.NET 10 chính thức hỗ trợ C# 14, Clean Architecture).
+- **Node.js Runtime:** `v24.21.0` (LTS, đi kèm npm `11.19.0`).
+- **Docker Engine:** `Docker version 29.9.2, build a82e528`.
+- **Git Version:** Đã cấu hình template `.gitmessage`, author `vothang4105 <vothang4105@gmail.com>`.
+
+#### Task 2: Cập nhật Cấu hình Docker PostgreSQL UTC+7 (NFR-13)
+- Đã cập nhật file `docker-compose.yml`:
+  - Image: `postgres:16-alpine`
+  - Container name: `mbhms-postgres`
+  - Biến môi trường múi giờ: `TZ: Asia/Ho_Chi_Minh` (đáp ứng tiêu chuẩn phi chức năng NFR-13).
+  - Database name: `mbhms_db` (user: `postgres`, password: `postgres`).
+  - Port mapping: `5432:5432`.
+  - Volume lưu dữ liệu bền vững: `postgres_data`.
+  - Healthcheck tự động: `pg_isready -U postgres -d mbhms_db`.
+- *Lưu ý vận hành:* Khi bạn bật ứng dụng Docker Desktop trên máy, chỉ cần chạy lệnh `docker compose up -d` để khởi động container PostgreSQL.
+
+#### Task 3: Khởi tạo Khung Solution .NET 10 & Ứng dụng Next.js
+- **Backend Solution:**
+  - Đã khởi tạo solution rỗng trong `backend/`: `backend/MBHMS.sln` và `backend/MBHMS.slnx`.
+  - Lệnh `dotnet build backend/MBHMS.sln` chạy thành công (0 Errors, 1 Warning về chưa có project).
+- **Frontend App:**
+  - Đã khởi tạo ứng dụng Next.js TypeScript (App Router, Tailwind CSS 4, ESLint 9, React 19) trong `frontend/`.
+  - Tối ưu hóa `frontend/src/app/layout.tsx` sử dụng font sans-serif hệ thống thay cho external Google Fonts fetch để đảm bảo khả năng build ngoại tuyến ổn định.
+  - Cấu hình `"build": "next build --webpack"` trong `frontend/package.json`.
+  - Lệnh `npm run build` chạy thành công 100% (`Compiled successfully in 3.3s`, TypeScript check passed).
+- **Khuyến nghị IDE Extensions:**
+  - *C# Dev Kit* / *OmniSharp* cho Backend .NET 10.
+  - *Tailwind CSS IntelliSense* cho Next.js styling.
+  - *Mermaid Preview* xem trước các sơ đồ thiết kế kiến trúc.
+  - *GitLens* theo dõi commit history.
+
+---
+
+### 3. Kiểm chứng & Đo lường Scope (Quality Gate)
+- **Tập tin đã tạo/sửa đổi:**
+  - `backend/MBHMS.sln`, `backend/MBHMS.slnx` (CREATE)
+  - `frontend/` (Next.js app complete structure) (CREATE)
+  - `docker-compose.yml` (MODIFY - thêm `TZ: Asia/Ho_Chi_Minh`)
+  - `scripts/verify-scope.ps1` (MODIFY - hỗ trợ tiền tố thư mục)
+  - `docs/planning/daily-plans/DAY-004.md` (CREATE / COMPLETED)
+  - `docs/development/DEVELOPMENT_LOG.md` (APPEND)
+- **Kiểm toán Scope:** Lệnh `scripts/verify-scope.ps1 -PlanFile docs/planning/daily-plans/DAY-004.md` đạt kết quả **`[SCOPE AUDIT PASSED]`**.
+- **Tiêu chí nghiệm thu (Acceptance Criteria):** Đạt 6/6 (100%).
+
+---
+
+### 4. Đánh giá sẵn sàng cho Ngày 5 (DAY-005)
+- Toàn bộ hạ tầng lập trình cục bộ (.NET 10, Next.js, Docker PostgreSQL) đã được xác nhận hoạt động trơn tru.
+- Sẵn sàng bước sang **Ngày 5:** Đăng ký và chuẩn bị các tài khoản dịch vụ đám mây miễn phí: **Supabase** (PostgreSQL DB Cloud & Storage cho ảnh CCCD/HĐ PDF), **VNPay Sandbox** (Cổng thanh toán thử nghiệm), và **Resend** (Email transactional service).

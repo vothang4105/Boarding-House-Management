@@ -60,7 +60,7 @@ foreach ($changed in $gitChanges) {
     # Check if exact match, subpath match, or directory match
     $allowed = $false
     foreach ($auth in $authorizedFiles) {
-        if ($normalized -eq $auth -or $normalized.EndsWith($auth) -or $auth.StartsWith($normalized)) {
+        if ($normalized -eq $auth -or $normalized.EndsWith($auth) -or $auth.StartsWith($normalized) -or $normalized.StartsWith($auth)) {
             $allowed = $true
             break
         }
