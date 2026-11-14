@@ -35,7 +35,7 @@ foreach ($line in (Get-Content -Path $PlanFile)) {
         break
     }
     if ($isTargetSection -and $line -match '^\s*-\s+([^\s#]+)') {
-        $cleanPath = $matches[1].Trim().Replace('\', '/')
+        $cleanPath = $matches[1].Trim().Trim('`').Replace('\', '/')
         if ($cleanPath -notmatch '\.\.\.' -and $cleanPath -ne "") {
             $authorizedFiles.Add($cleanPath)
         }
@@ -57,10 +57,10 @@ $gitChanges = git status --porcelain | ForEach-Object {
 $violations = @()
 foreach ($changed in $gitChanges) {
     $normalized = $changed.Replace('\', '/')
-    # Check if exact match or subpath match
+    # Check if exact match, subpath match, or directory match
     $allowed = $false
     foreach ($auth in $authorizedFiles) {
-        if ($normalized -eq $auth -or $normalized.EndsWith($auth)) {
+        if ($normalized -eq $auth -or $normalized.EndsWith($auth) -or $auth.StartsWith($normalized)) {
             $allowed = $true
             break
         }
@@ -72,7 +72,7 @@ foreach ($changed in $gitChanges) {
 
 if ($violations.Count -gt 0) {
     Write-Host "`n[SCOPE VIOLATION DETECTED]" -ForegroundColor Red
-    Write-Host "The following files were modified but are NOT authorized in $PlanFile:" -ForegroundColor Red
+    Write-Host "The following files were modified but are NOT authorized in ${PlanFile}:" -ForegroundColor Red
     $violations | ForEach-Object { Write-Host "  [!] $_" -ForegroundColor Red }
     exit 1
 } else {

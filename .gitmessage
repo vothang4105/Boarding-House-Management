@@ -1,0 +1,18 @@
+# <type>(<scope>): <short summary>
+# │       │             │
+# │       │             └─> Tóm tắt ngắn gọn ở thể mệnh lệnh (dưới 72 ký tự, không chấm cuối)
+# │       └─> Phạm vi thay đổi (vd: repo, auth, room, contract, invoice, ticket, dashboard)
+# └─> Loại commit:
+#     - feat:     Tính năng mới (A new feature)
+#     - fix:      Sửa lỗi (A bug fix)
+#     - docs:     Tài liệu (Documentation only changes)
+#     - chore:    Cấu hình, tooling, phụ thuộc (Build process, repo configs)
+#     - refactor: Tái cấu trúc mã nguồn không đổi logic (Refactoring code)
+#     - test:     Thêm hoặc sửa kiểm thử (Adding/fixing tests)
+#     - perf:     Tối ưu hiệu năng (Performance improvement)
+#
+# Ví dụ mẫu:
+#   feat(auth): implement JWT login and password hashing (FR-45)
+#   fix(invoice): correct electricity calculation formula (BR-01)
+#   docs(srs): update business rules for room capacity (BR-10)
+#   chore(repo): initialize monorepo structure and conventional commits

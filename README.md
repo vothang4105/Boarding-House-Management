@@ -50,28 +50,51 @@ Hệ thống được chia thành các phân hệ chức năng tương ứng v�
 
 ## 3. Công nghệ Sử dụng & Ngôn ngữ Lập trình (Tech Stack)
 
-Dự án được định hướng phát triển bền vững, dễ mở rộng và bảo trì nhờ việc tách biệt rõ ràng kiến trúc Backend, Frontend và Database theo chuẩn phân tích mô hình BCE (Boundary - Control - Entity).
+Hệ thống được phát triển theo mô hình **Monorepo** với kiến trúc phân tách rõ ràng giữa Backend, Frontend và Database:
 
-### 3.1. Ngôn ngữ Lập trình Chủ đạo
-* **TypeScript / JavaScript:** Sử dụng xuyên suốt từ Client đến Server nhằm đồng bộ hóa kiểu dữ liệu, tăng tốc độ phát triển và tối ưu hóa hiệu năng xử lý bất đồng bộ (Asynchronous).
-* **SQL (Structured Query Language):** Sử dụng để viết các truy vấn tối ưu, Trigger, và Stored Procedure bảo vệ toàn vẹn dữ liệu tài chính.
+### 3.1. Ngôn ngữ & Nền tảng Chủ đạo
+* **C# / .NET 10:** Xây dựng hệ thống RESTful API hiệu năng cao, type-safety tuyệt đối và tuân thủ mô hình **Clean Architecture**.
+* **TypeScript / JavaScript:** Sử dụng cho toàn bộ Frontend Next.js nhằm đảm bảo tính đồng bộ dữ liệu và trải nghiệm người dùng tối ưu.
+* **SQL (PostgreSQL):** Đảm bảo tính toàn vẹn dữ liệu tài chính theo chuẩn ACID, khóa ngoại và chỉ mục tối ưu.
 
 ### 3.2. Công nghệ Backend (Server-side)
-* **Framework:** Node.js phối hợp với **NestJS** (hoặc **Express.js**) cấu trúc mã nguồn theo mô hình OOP, Dependency Injection mạnh mẽ, giúp hệ thống API đạt tính modular cao.
-* **Xác thực & Phân quyền:** **JWT (JSON Web Token)** kết hợp với Middleware Role-based Access Control (RBAC) để nhận diện và chặn truy cập trái phép giữa các vai trò User.
-* **Gửi Email:** **Nodemailer** tích hợp SMTP Service (SendGrid hoặc Gmail API) đảm bảo luồng mail gửi đi không bị rơi vào hộp thư rác (Spam).
+* **Framework:** **ASP.NET Core Web API (.NET 10)** tổ chức theo chuẩn Clean Architecture (Domain, Application, Infrastructure, WebAPI).
+* **ORM:** **Entity Framework Core 10** hỗ trợ Migration, **Global Query Filters** (tự động cô lập dữ liệu theo Dãy trọ của Manager - BR-14), và **SaveChangesInterceptor** (ghi Audit Log tự động - NFR-11).
+* **Xác thực & Phân quyền:** **JWT (JSON Web Token)** kết hợp mã hóa mật khẩu `Bcrypt` (cost $\ge$ 10) và phân quyền RBAC.
+* **Email Service:** **Resend API / SMTP** gửi thông báo hóa đơn, nhắc nợ và cập nhật trạng thái ticket.
 
-### 3.3. Công nghệ Frontend & Mobile (Client-side)
-* **Ứng dụng Di động (Manager/Tenant):** Phát triển bằng **React Native** hoặc **Flutter** giúp đóng gói ứng dụng mượt mà trên cả 2 nền tảng iOS và Android từ một nền tảng mã nguồn duy nhất.
-* **Trang Quản trị Web (Owner):** Cấu trúc bằng **React.js** kết hợp với thư viện UI Component hiện đại (Ant Design hoặc Tailwind CSS) đem lại trải nghiệm Dashboard mượt mà, trực quan.
-* **Kiến trúc Offline-First:** Sử dụng **SQLite (hoặc Hive / WatermelonDB)** tích hợp tại Client để làm lớp đệm lưu trữ dữ liệu chỉ số điện tạm thời khi thiết bị mất kết nối Internet.
+### 3.3. Công nghệ Frontend (Client-side)
+* **Framework:** **Next.js (App Router)** + **React** + **TypeScript**.
+* **UI & Styling:** **Tailwind CSS** + **shadcn/ui** đem lại giao diện hiện đại, trực quan, responsive tối ưu từ 360px trở lên (NFR-08).
+* **Biểu đồ & Báo cáo:** **Recharts** trực quan hóa doanh thu 12 tháng và tỷ lệ lấp đầy.
+* **Kiến trúc Offline-First:** Sử dụng **Dexie.js (IndexedDB)** lưu trữ tạm thời chỉ số điện trên trình duyệt di động khi mất mạng và tự động đồng bộ khi có kết nối trở lại (FR-18, NFR-09).
 
-### 3.4. Hệ Quản trị Cơ sở Dữ liệu (Database)
-* **RDBMS:** **PostgreSQL** (hoặc **MySQL 8.0**) nhằm đảm bảo tính toàn vẹn dữ liệu thông qua cơ chế khóa ngoại (Foreign Keys), ràng buộc kiểm tra (Check Constraints), và đảm bảo các giao dịch tài chính tuân thủ tuyệt đối chuẩn **ACID**.
+### 3.4. Hệ Quản trị Cơ sở Dữ liệu & Lưu trữ (Database & Cloud)
+* **RDBMS:** **PostgreSQL 16** (Triển khai trên **Supabase** cho cloud và Docker Compose cho local dev).
+* **File Storage:** **Supabase Storage** lưu trữ ảnh hợp đồng PDF, ảnh CCCD (bảo mật qua Signed URL có thời hạn - NFR-06).
 
-### 3.5. Tích hợp bên thứ ba & Triển khai (Integrations & DevOps)
-* **Payment Gateway:** **VNPay Sandbox API** (môi trường thử nghiệm tích hợp mã giao dịch `vnp_TxnRef`, kiểm tra chữ ký bảo mật `vnp_SecureHash` và xử lý IPN URL).
-* **Quản lý mã nguồn:** **Git & GitHub** tuân thủ quy trình GitFlow tiêu chuẩn (nhánh `main`, `develop`, và các `feature/*`).
+### 3.5. Tích hợp bên thứ ba & DevOps
+* **Payment Gateway:** **VNPay Sandbox API** (tạo URL thanh toán, mã QR chuyển khoản và tiếp nhận IPN Callback tự động).
+* **Quy trình Git:** Tuân thủ quy tắc **Conventional Commits** (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`) với 2 nhánh chính: `main` (production) và `develop` (daily integration).
+* **Local Dev:** `docker-compose.yml` khởi chạy nhanh PostgreSQL cục bộ.
 
-### 3.6 Test Code 
-Test commit 
+---
+
+## 4. Cấu trúc Dự án (Monorepo)
+
+```text
+Boarding-House-Management/
+├── .agent/                 # Agent rules, skills & workflows
+├── backend/                # ASP.NET Core .NET 10 Web API (Clean Architecture)
+├── frontend/               # Next.js App Router (TypeScript + Tailwind CSS + shadcn/ui)
+├── docs/                   # Tài liệu dự án
+│   ├── requirements/       # SRS v1.0 (Chốt)
+│   ├── planning/           # Master Plan (80 ngày) & Daily Plans
+│   └── development/        # Nhật ký phát triển (Append-Only)
+├── scripts/                # Scripts kiểm toán phạm vi (verify-scope.ps1)
+├── docker-compose.yml      # Cấu hình PostgreSQL 16 local container
+├── .gitmessage             # Conventional commits template
+├── .gitignore              # Multi-stack gitignore
+├── AGENTS.md               # Nguyên tắc phối hợp làm việc
+└── README.md               # Tài liệu giới thiệu dự án
+```
