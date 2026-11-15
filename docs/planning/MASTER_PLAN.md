@@ -11,7 +11,7 @@ Tài liệu này tổng hợp toàn bộ lộ trình 16 tuần (80 ngày làm vi
 | **Giai đoạn 1** | Tuần 1 - 2 | Ngày 1 – 10 | Khởi động, thiết lập môi trường & cấu trúc dự án |
 | **Giai đoạn 2** | Tuần 3 - 5 | Ngày 11 – 25 | Phân tích nghiệp vụ, thiết kế Database & Tài liệu BA |
 | **Giai đoạn 3** | Tuần 8 - 9 | Ngày 36 – 45 | Sprint 1: Core Authentication, Dãy phòng & Hợp đồng |
-| **Giai đoạn 4** | Tuần 10 - 11 | Ngày 46 – 55 | Sprint 2: Điện nước (Offline Sync), Hóa đơn & VNPay |
+| **Giai đoạn 4** | Tuần 10 - 11 | Ngày 46 – 55 | Sprint 2: Điện nước (Offline Sync), Hóa đơn & SePay VietQR |
 | **Giai đoạn 5** | Tuần 12 - 13 | Ngày 56 – 65 | Sprint 3: Sự cố (Tickets), Thông báo & Dashboard |
 | **Giai đoạn 6** | Tuần 14 - 15 | Ngày 66 – 75 | Tích hợp toàn diện, E2E Testing & UAT |
 | **Giai đoạn 7** | Tuần 16 | Ngày 76 – 80 | Đóng gói, viết README, quay Video Demo & Bàn giao |
@@ -25,7 +25,7 @@ Tài liệu này tổng hợp toàn bộ lộ trình 16 tuần (80 ngày làm vi
 * **Ngày 2:** Khởi tạo GitHub Repository (`mbhms-system`), chia nhánh `main` / `develop`, cài đặt Git Hooks và Conventional Commits.
 * **Ngày 3:** Xây dựng khung Ma trận truy vết yêu cầu (RTM) trên Notion/Excel để theo dõi các yêu cầu Must-have.
 * **Ngày 4:** Thiết lập môi trường local: .NET 10 SDK, Node.js, Docker Desktop và chạy thử PostgreSQL container.
-* **Ngày 5:** Đăng ký các tài khoản dịch vụ miễn phí: **Supabase** (DB & Storage), **VNPay Sandbox**, và **Resend** (Email).
+* **Ngày 5:** Chốt hạ tầng dịch vụ: **Supabase** (DB & Storage), **SePay Test Mode** (VietQR + Webhook), **Resend/Mailtrap** (Email) & lập phiếu Change Request CR-01.
 * **Ngày 6:** Viết tài liệu Vision & Scope ngắn gọn, định nghĩa rõ ràng Actor (Owner, Manager, Tenant, Guest) và phạm vi ứng dụng.
 * **Ngày 7:** Dựng khung Project Backend bằng ASP.NET Core Web API Clean Architecture.
 * **Ngày 8:** Dựng khung Project Frontend bằng Next.js (App Router) + TypeScript + Tailwind CSS + shadcn/ui.
@@ -35,7 +35,7 @@ Tài liệu này tổng hợp toàn bộ lộ trình 16 tuần (80 ngày làm vi
 ### Giai đoạn 2: Phân tích & Thiết kế Kiến trúc (Ngày 11 – Ngày 25)
 * **Ngày 11:** Thiết kế sơ đồ **ERD** hoàn chỉnh cho toàn bộ hệ thống (Users, Buildings, Rooms, Contracts, Tenants, Invoices, Tickets, AuditLogs).
 * **Ngày 12:** Viết đặc tả Use Case cho nhóm Quản lý Nhà/Phòng và thiết kế các bảng ánh xạ Scope cho Manager (BR-14).
-* **Ngày 13:** Thiết kế sơ đồ **Sequence Diagram** cho 3 luồng: Đăng nhập/Phân quyền, Sinh hóa đơn tự động, và Thanh toán VNPay IPN Callback.
+* **Ngày 13:** Thiết kế sơ đồ **Sequence Diagram** cho 3 luồng: Đăng nhập/Phân quyền, Sinh hóa đơn tự động, và Thanh toán SePay VietQR & Webhook đối soát tự động.
 * **Ngày 14:** Vẽ sơ đồ **BPMN** cho 2 quy trình: *Nhận khách mới* và *Chốt tiền cuối tháng*.
 * **Ngày 15:** Vẽ sơ đồ **BPMN** cho 3 quy trình: *Xử lý sự cố, Gia hạn hợp đồng, Chấm dứt hợp đồng*.
 * **Ngày 16:** Thiết kế Low-fi Wireframes trên Figma cho Owner và Manager.
@@ -69,8 +69,8 @@ Tài liệu này tổng hợp toàn bộ lộ trình 16 tuần (80 ngày làm vi
 * **Ngày 49:** Viết **Cronjob tự động sinh hóa đơn hàng loạt** vào ngày 28 hàng tháng cho 64 phòng ($\le 30$ giây) (FR-21, BR-07, NFR-02).
 * **Ngày 50:** Code API cho phép **thêm/sửa các khoản phụ thu** vào hóa đơn trước khi gửi (FR-23).
 * **Ngày 51:** Code tính năng **Gửi hóa đơn qua Email** bằng Resend và hiển thị thông báo In-app (FR-24, FR-36).
-* **Ngày 52:** Tích hợp cổng **VNPay Sandbox**: Tạo URL thanh toán và mã QR chuyển khoản (FR-25).
-* **Ngày 53:** Xây dựng **VNPay IPN Callback Endpoint**: Xử lý dữ liệu trả về để tự động đổi trạng thái hóa đơn sang "Đã thanh toán" (FR-26).
+* **Ngày 52:** Tích hợp **SePay VietQR**: Tạo mã QR chuyển khoản động chuẩn NAPAS247 (FR-25, CR-01).
+* **Ngày 53:** Xây dựng **SePay Webhook Endpoint**: Xác thực chữ ký/API Key và tự động đổi trạng thái hóa đơn sang "Đã thanh toán" (FR-26, CR-01).
 * **Ngày 54:** Viết Background Job tự động chuyển trạng thái hóa đơn sang **Quá hạn** sau ngày 5 tháng tiếp theo (FR-27, FR-28, BR-08).
 * **Ngày 55:** Code tính năng **In và Xuất hóa đơn ra file PDF** chuẩn VNĐ (FR-29, NFR-12) và hoàn tất Sprint 2.
 
@@ -88,7 +88,7 @@ Tài liệu này tổng hợp toàn bộ lộ trình 16 tuần (80 ngày làm vi
 
 ### Giai đoạn 6: Tích hợp, Kiểm thử & UAT (Ngày 66 – Ngày 75)
 * **Ngày 66:** Viết kịch bản kiểm thử toàn diện bám sát tiêu chí nghiệm thu (Acceptance Criteria).
-* **Ngày 67:** Thực hiện **End-to-End (E2E) Testing**: Chạy thử toàn bộ luồng từ tạo phòng, hợp đồng, nhập điện, sinh hóa đơn đến thanh toán VNPay.
+* **Ngày 67:** Thực hiện **End-to-End (E2E) Testing**: Chạy thử toàn bộ luồng từ tạo phòng, hợp đồng, nhập điện, sinh hóa đơn đến thanh toán SePay VietQR.
 * **Ngày 68:** Kiểm thử bảo mật phân quyền chéo (Thử dùng Manager dãy A truy cập dữ liệu dãy B theo BR-14) và kiểm tra tính năng Offline.
 * **Ngày 69:** Kiểm thử tương thích trình duyệt (Chrome, Safari, Edge) và tối ưu hóa tốc độ tải trang.
 * **Ngày 70:** Sửa tất cả các lỗi tồn đọng, đảm bảo hệ thống **0 lỗi Blocker hoặc Critical**.

@@ -46,7 +46,7 @@ Khách hàng đang quản lý 3 dãy nhà trọ với tổng 64 phòng cho thuê
 ### 1.3. Phạm vi dự án
 | ✓ TRONG phạm vi | ✗ NGOÀI phạm vi |
 | :--- | :--- |
-| • Web app responsive (điện thoại + máy tính)<br>• 3 nhóm người dùng: Chủ trọ, Quản lý, Khách thuê<br>• Quản lý phòng, hợp đồng, hóa đơn, sự cố, báo cáo<br>• Tích hợp VNPay sandbox<br>• Thông báo qua email + in-app | • Native mobile app (iOS/Android)<br>• Camera an ninh, IoT đồng hồ thông minh<br>• Tích hợp Zalo OA, SMS, push notification<br>• Đa ngôn ngữ (chỉ tiếng Việt)<br>• Blacklist liên nhà trọ, bán hàng, nhân sự |
+| • Web app responsive (điện thoại + máy tính)<br>• 3 nhóm người dùng: Chủ trọ, Quản lý, Khách thuê<br>• Quản lý phòng, hợp đồng, hóa đơn, sự cố, báo cáo<br>• Tích hợp SePay (VietQR + Webhook đối soát tự động - CR-01)<br>• Thông báo qua email + in-app | • Native mobile app (iOS/Android)<br>• Camera an ninh, IoT đồng hồ thông minh<br>• Tích hợp Zalo OA, SMS, push notification<br>• Đa ngôn ngữ (chỉ tiếng Việt)<br>• Blacklist liên nhà trọ, bán hàng, nhân sự |
 
 ---
 
@@ -110,8 +110,8 @@ Khách hàng đang quản lý 3 dãy nhà trọ với tổng 64 phòng cho thuê
 | **FR-22** | Hóa đơn gồm: tiền phòng, điện, nước, internet, rác, giữ xe, phụ phí | Hệ thống | **M** |
 | **FR-23** | Owner/Manager có thể thêm/sửa khoản phụ thu trước khi gửi | Owner, Manager | **M** |
 | **FR-24** | Gửi hóa đơn qua email + in-app | Hệ thống | **M** |
-| **FR-25** | Khách thuê đóng tiền qua QR VNPay hoặc đánh dấu "đã đóng tiền mặt" | Tenant, Manager | **M** |
-| **FR-26** | Đối soát thanh toán VNPay tự động qua callback | Hệ thống | **M** |
+| **FR-25** | Khách thuê đóng tiền qua mã QR VietQR (SePay) hoặc đánh dấu "đã đóng tiền mặt" (CR-01) | Tenant, Manager | **M** |
+| **FR-26** | Đối soát thanh toán tự động qua SePay Webhook (xác thực API Key/HMAC & bóc tách mã hóa đơn - CR-01) | Hệ thống | **M** |
 | **FR-27** | Hóa đơn có 4 trạng thái: Nháp, Đã gửi, Đã thanh toán, Quá hạn | Hệ thống | **M** |
 | **FR-28** | Tự đánh dấu Quá hạn nếu sau ngày 5 tháng sau chưa đóng | Hệ thống | **M** |
 | **FR-29** | In/Xuất hóa đơn ra PDF | Owner, Manager, Tenant | **S** |
@@ -203,7 +203,7 @@ Khách hàng đang quản lý 3 dãy nhà trọ với tổng 64 phòng cho thuê
 | **THỜI GIAN** | 16 tuần từ kick-off |
 | **NHÂN SỰ** | 3 người (1 BA + 2 Dev) *(Đối với Solo Dev: 1 người kiêm nhiệm theo lộ trình 80 ngày)* |
 | **HOSTING** | Free tier (Vercel / Railway / Render) |
-| **THANH TOÁN** | VNPay Sandbox |
+| **THANH TOÁN** | SePay (VietQR + Webhook đối soát tự động - CR-01) |
 | **EMAIL** | Resend / Mailtrap / Gmail SMTP |
 | **TECH STACK** | Tự do, ưu tiên phổ biến *(Chốt theo Master Plan: .NET 10 + Next.js + PostgreSQL)* |
 
@@ -221,7 +221,7 @@ Khách hàng đang quản lý 3 dãy nhà trọ với tổng 64 phòng cho thuê
 - [ ] ERD + Data Dictionary
 - [ ] Wireframe (low-fi) Figma cho 3 role
 - [ ] Mockup (hi-fi) cho ít nhất 10 màn hình chính
-- [ ] Sequence Diagram cho 3 luồng: Sinh hóa đơn, Thanh toán VNPay, Đăng nhập
+- [ ] Sequence Diagram cho 3 luồng: Sinh hóa đơn, Thanh toán SePay VietQR & Webhook, Đăng nhập
 - [ ] Ma trận truy vết yêu cầu (Requirement Traceability Matrix)
 
 ### 7.2. Từ Developer
@@ -256,7 +256,7 @@ Khách hàng đang quản lý 3 dãy nhà trọ với tổng 64 phòng cho thuê
 
 Hệ thống được coi là **đạt MVP** khi đáp ứng tất cả các tiêu chí dưới đây:
 - [ ] Tất cả yêu cầu mức **M** được triển khai và pass test.
-- [ ] Luồng nghiệp vụ hoàn chỉnh: Owner đăng nhập → tạo 1 dãy → 1 phòng → 1 hợp đồng → nhập chỉ số điện → sinh hóa đơn → khách thanh toán thành công qua VNPay sandbox.
+- [ ] Luồng nghiệp vụ hoàn chỉnh: Owner đăng nhập → tạo 1 dãy → 1 phòng → 1 hợp đồng → nhập chỉ số điện → sinh hóa đơn → khách thanh toán thành công qua SePay VietQR và Webhook đối soát tự động cập nhật PAID.
 - [ ] Manager scope dãy A không xem được dữ liệu dãy B.
 - [ ] Khách thuê tạo được ticket và nhận email khi ticket cập nhật.
 - [ ] Dashboard hiển thị đủ 4 chỉ số ở FR-39 với dữ liệu thật.

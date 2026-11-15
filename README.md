@@ -8,7 +8,7 @@ Hệ thống Quản lý Nhà trọ Mini (MBHMS) được thiết kế và phát 
 
 MBHMS giải quyết triệt để các hạn chế của phương pháp quản lý nhà trọ thủ công truyền thống (sử dụng sổ sách hoặc file Excel rời rạc) dễ dẫn đến sai sót dữ liệu, thất thoát tài chính và tốn thời gian. 
 
-Hệ thống cung cấp một giải pháp quản lý tập trung trên nền tảng Cloud, đồng thời tối ưu trải nghiệm di động thông qua việc hỗ trợ **ghi số điện ngoại tuyến (Offline Mode)**, tích hợp **thanh toán trực tuyến (VNPay)** và tự động hóa hệ thống **chăm sóc khách hàng (Email Ticket System)**. Quy trình nghiệp vụ được thiết kế chặt chẽ, phân quyền rõ ràng giữa Chủ trọ (Owner) và Người quản lý dãy (Manager), mang lại sự minh bạch và an tâm tuyệt đối cho cả bên cho thuê và khách thuê (Tenant).
+Hệ thống cung cấp một giải pháp quản lý tập trung trên nền tảng Cloud, đồng thời tối ưu trải nghiệm di động thông qua việc hỗ trợ **ghi số điện ngoại tuyến (Offline Mode)**, tích hợp **thanh toán trực tuyến VietQR qua SePay (tự động đối soát Webhook)** và tự động hóa hệ thống **chăm sóc khách hàng (Email Ticket System)**. Quy trình nghiệp vụ được thiết kế chặt chẽ, phân quyền rõ ràng giữa Chủ trọ (Owner) và Người quản lý dãy (Manager), mang lại sự minh bạch và an tâm tuyệt đối cho cả bên cho thuê và khách thuê (Tenant).
 
 ---
 
@@ -33,8 +33,8 @@ Hệ thống được chia thành các phân hệ chức năng tương ứng v�
 
 ### 2.3. Phân hệ Khách thuê & Thanh toán (Khách thuê - Tenant)
 * **Tra cứu hóa đơn định kỳ:** Xem chi tiết bảng phân rã dòng tiền (Tiền phòng, Tiền điện phát sinh, Tổng tiền phải trả) của tháng hiện tại và lịch sử các tháng trước.
-* **Tích hợp Cổng thanh toán trực tuyến VNPay:** Tenant nhấn nút "Thanh toán", hệ thống chuyển hướng sang cổng VNPay Sandbox. Tenant thực hiện quét mã QR hoặc nhập tài khoản ngân hàng thử nghiệm để thanh toán. 
-* **Cập nhật Trạng thái Tức thời (IPN Callback):** Sau khi giao dịch thành công, hệ thống tiếp nhận tín hiệu IPN tự động từ VNPay, cập nhật trạng thái hóa đơn thành "Đã thanh toán" (PAID), ghi nhận thời gian và gửi biên lai điện tử cho khách.
+* **Thanh toán trực tuyến qua SePay VietQR (CR-01):** Khách thuê nhấn "Thanh toán", hệ thống hiển thị trực tiếp mã VietQR động theo chuẩn NAPAS247 (chứa số tài khoản chủ trọ, số tiền chính xác và mã hóa đơn duy nhất). Khách thuê quét mã bằng bất kỳ ứng dụng ngân hàng nào (hoặc chuyển khoản/đóng tiền mặt).
+* **Đối soát tự động tức thì (SePay Webhook):** Khi tài khoản ngân hàng của chủ trọ nhận tiền, SePay gửi tín hiệu Webhook tức thời đến Web API, hệ thống tự động bóc tách mã hóa đơn, chuyển trạng thái thành "Đã thanh toán" (PAID), ghi nhận thời gian giao dịch và gửi email biên lai điện tử tự động cho khách thuê.
 
 ### 2.4. Phân hệ Tương tác & Xử lý Sự cố (Ticket System)
 * **Gửi Ticket báo sự cố:** Khách thuê chụp ảnh, viết mô tả nội dung hư hỏng cơ sở vật chất (ví dụ: hỏng điều hòa, cháy bóng đèn, tắc nước) và gửi lên hệ thống.
@@ -74,7 +74,7 @@ Hệ thống được phát triển theo mô hình **Monorepo** với kiến tr�
 * **File Storage:** **Supabase Storage** lưu trữ ảnh hợp đồng PDF, ảnh CCCD (bảo mật qua Signed URL có thời hạn - NFR-06).
 
 ### 3.5. Tích hợp bên thứ ba & DevOps
-* **Payment Gateway:** **VNPay Sandbox API** (tạo URL thanh toán, mã QR chuyển khoản và tiếp nhận IPN Callback tự động).
+* **Payment Gateway:** **SePay (VietQR + Webhook)** hỗ trợ Test Mode và Production (sinh ảnh VietQR động chuẩn NAPAS247, tự động đối soát giao dịch qua Webhook thời gian thực).
 * **Quy trình Git:** Tuân thủ quy tắc **Conventional Commits** (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`) với 2 nhánh chính: `main` (production) và `develop` (daily integration).
 * **Local Dev:** `docker-compose.yml` khởi chạy nhanh PostgreSQL cục bộ.
 
