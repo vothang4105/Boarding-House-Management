@@ -286,3 +286,96 @@
 ### 4. Đánh giá sẵn sàng cho Ngày 5 (DAY-005)
 - Toàn bộ hạ tầng lập trình cục bộ (.NET 10, Next.js, Docker PostgreSQL) đã được xác nhận hoạt động trơn tru.
 - Sẵn sàng bước sang **Ngày 5:** Đăng ký và chuẩn bị các tài khoản dịch vụ đám mây miễn phí: **Supabase** (PostgreSQL DB Cloud & Storage cho ảnh CCCD/HĐ PDF), **VNPay Sandbox** (Cổng thanh toán thử nghiệm), và **Resend** (Email transactional service).
+
+
+## [DAY-005] - 2026-11-15 - Chốt Hạ tầng Dịch vụ (Supabase, SePay, Email) & Cập nhật Tài liệu Chuyển đổi
+
+### 1. Thông tin chung
+- **Task ID:** DAY-005
+- **Trạng thái:** COMPLETED
+- **Vai trò thực hiện:** Developer Agent
+- **Tài liệu căn cứ:** `docs/planning/daily-plans/DAY-005.md`, `docs/CR-01_Change_Payment_Gateway_To_SePay.md`, `docs/01_scope_and_entities.md`, `docs/requirements/SRS.md`, `docs/requirements/RTM.md`
+
+---
+
+### 2. Chi tiết kết quả thực hiện
+
+#### Task 1: Khởi động & Rà soát Ràng buộc Kỹ thuật
+- Kéo 4 thẻ công việc của Ngày 5 sang cột Today trên bảng Kanban:
+  1. Cấu hình Supabase (PostgreSQL + Private/Public Storage).
+  2. Đăng ký & thiết lập SePay Test Mode.
+  3. Cấu hình dịch vụ Email (Resend / Mailtrap).
+  4. Lập phiếu Change Request (CR-01) & cập nhật tài liệu dự án.
+- Rà soát các ràng buộc phi chức năng:
+  - `NFR-01`: Thời gian phản hồi hệ thống < 3 giây (được hỗ trợ bởi Datacenter Singapore).
+  - `NFR-06`: Bảo mật lưu trữ ảnh CCCD và file hợp đồng PDF qua Private Bucket & Signed URL có thời hạn (TTL 3600 giây).
+  - `NFR-10`: Database sao lưu tự động hàng ngày (Daily automated backup).
+  - Quy trình quản lý thay đổi: Tuân thủ quy định tại trang 2 SRS gốc.
+
+#### Task 2: Cấu hình Hạ tầng Đám mây (Supabase, SePay, Email)
+- **Supabase Cloud (PostgreSQL 16 & Storage):**
+  - Project: `mbhms-system` tại Datacenter Singapore (`ap-southeast-1`) đảm bảo độ trễ thấp (< 50ms) tới Việt Nam.
+  - Chuẩn bị sẵn Connection String Session Pooling (`Port 5432`) và Transaction Pooling (`Port 6543`) cho EF Core 10.
+  - Khởi tạo 2 Storage Buckets:
+    - `public-rooms` (Public): Lưu tối đa 5 ảnh công khai cho mỗi phòng trọ (`FR-06`).
+    - `private-documents` (Private): Lưu ảnh CCCD khách thuê (`FR-07`) và hợp đồng số dạng PDF $\le 10\text{MB}$ (`FR-09`), chỉ truy cập qua Signed URL có thời hạn (`NFR-06`).
+- **SePay Payment Gateway (Thay thế VNPay Sandbox):**
+  - Thiết lập Test Mode trên SePay (`my.sepay.vn`) với tài khoản ngân hàng ảo thử nghiệm, sinh `SEPAY_API_KEY` và `SEPAY_WEBHOOK_SECRET`.
+  - Chuẩn hóa cấu trúc URL sinh VietQR động chuẩn NAPAS247:
+    `https://qr.sepay.vn/img?acc={acc}&bank={bank}&amount={amount}&des={des}&template=compact`
+  - Đảm bảo tham số `des` nhúng mã hóa đơn duy nhất (ví dụ: `HD202611A101`) phục vụ tự động đối soát qua Webhook.
+- **Transactional Email Service:**
+  - Chuẩn bị Resend API Key (`re_...`) phục vụ gửi email thực tế cho các luồng nghiệp vụ khi demo bảo vệ đồ án.
+  - Chuẩn bị Mailtrap SMTP (`sandbox.smtp.mailtrap.io:2525`) hứng email test hàng loạt khi chạy Cronjob sinh 64 hóa đơn ngày 28 hàng tháng mà không lo bị chặn/khóa tài khoản.
+
+#### Task 3: Lập CR-01 & Cập nhật Đồng bộ Bộ Tài liệu Dự án
+- **Phiếu Change Request CR-01 (`docs/CR-01_Change_Payment_Gateway_To_SePay.md`):**
+  - Lý do chuyển đổi: Tiền thuê chuyển thẳng 100% vào tài khoản cá nhân của chủ trọ chị Lan, không chịu phí chiết khấu giao dịch trung gian (1.5% - 2.5%), phù hợp với thói quen quét VietQR của sinh viên và hỗ trợ Test Mode miễn phí hoàn chỉnh.
+  - Phân tích tác động chi tiết tới 5 mục của SRS gốc: Mục 1.3 (Phạm vi), Mục 3.4 (FR-25, FR-26), Mục 6 (Ràng buộc), Mục 7.1 (Deliverables Sequence Diagram), và Mục 9 (Acceptance Criteria).
+- **Cập nhật Ma trận RTM (`docs/requirements/RTM.md`):**
+  - Dòng `FR-25`: Cập nhật thành khách thuê đóng tiền qua mã QR VietQR (SePay) hoặc tiền mặt (CASH).
+  - Dòng `FR-26`: Cập nhật thành đối soát thanh toán tự động qua SePay Webhook (xác thực API Key/HMAC & bóc tách mã hóa đơn).
+- **Cập nhật Đặc tả Phạm vi & Thực thể (`docs/01_scope_and_entities.md`):**
+  - Soạn thảo tài liệu đặc tả phạm vi ranh giới hệ thống, ma trận vai trò người dùng và chi tiết 11 thực thể nền tảng.
+  - Cập nhật thực thể `Invoice` với `PaymentMethod` (SEPAY, CASH) và `SepayTransactionId` (string chống duplicate).
+- **Cập nhật `README.md`, `SRS.md`, `MASTER_PLAN.md`:**
+  - Loại bỏ hoàn toàn các từ khóa VNPay Sandbox sang SePay VietQR + Webhook đối soát tự động.
+- **Xây dựng Template Cấu hình:**
+  - Khởi tạo `.env.example` chuẩn hóa biến môi trường cho Database, Supabase, SePay, Resend, Mailtrap, JWT.
+  - Khởi tạo `backend/src/MBHMS.WebApi/appsettings.Example.json` theo chuẩn cấu hình ASP.NET Core Clean Architecture.
+
+#### Task 4: Kiểm toán Bảo mật & Nghiệm thu Scope
+- Cập nhật `.gitignore`: Chặn triệt để `appsettings.json`, `appsettings.*.json` (trừ `.Example.json`), đảm bảo không để lọt khóa bí mật thật lên Git.
+- Kiểm toán scope với `scripts/verify-scope.ps1 -PlanFile docs/planning/daily-plans/DAY-005.md`: Kết quả **`[SCOPE AUDIT PASSED]`**.
+- Thực hiện 2 commit chuẩn Git Conventional:
+  1. `docs(cr): add CR-01 to replace VNPay sandbox with SePay VietQR webhook`
+  2. `chore(config): update environment templates and RTM for SePay`
+
+---
+
+### 3. Kiểm chứng & Đo lường Scope (Quality Gate)
+- **Tập tin đã tạo:**
+  - `docs/planning/daily-plans/DAY-005.md`
+  - `docs/CR-01_Change_Payment_Gateway_To_SePay.md`
+  - `docs/01_scope_and_entities.md`
+  - `.env.example`
+  - `backend/src/MBHMS.WebApi/appsettings.Example.json`
+- **Tập tin đã sửa đổi:**
+  - `.gitignore`
+  - `README.md`
+  - `docs/requirements/RTM.md`
+  - `docs/requirements/SRS.md`
+  - `docs/planning/MASTER_PLAN.md`
+- **Tập tin quy trình (Append-Only):**
+  - `docs/development/DEVELOPMENT_LOG.md`
+- **Kiểm toán Scope:** Lệnh `scripts/verify-scope.ps1 -PlanFile docs/planning/daily-plans/DAY-005.md` đạt kết quả **`[SCOPE AUDIT PASSED]`**.
+- **Tiêu chí nghiệm thu (Acceptance Criteria):** Đạt 8/8 (100%).
+- **Kiểm tra Build:**
+  - `dotnet build backend/MBHMS.sln`: Succeeded (0 Errors, 1 Warning).
+  - `npm --prefix frontend run build`: Compiled successfully (Static pages 4/4 generated).
+
+---
+
+### 4. Đánh giá sẵn sàng cho Ngày 6 (DAY-006)
+- Toàn bộ hạ tầng dịch vụ bên thứ ba (Supabase, SePay, Email) đã được chốt và đồng bộ tài liệu kiến trúc.
+- Sẵn sàng bước sang **Ngày 6:** Viết tài liệu Vision & Scope hoàn chỉnh, phân tích chi tiết User Roles & Use Case tổng thể cho 3 nhóm đối tượng: Chủ trọ (Owner), Quản lý dãy (Manager), và Khách thuê (Tenant).

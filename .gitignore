@@ -3,6 +3,13 @@
 .env.local
 .env.*.local
 *.env
+!.env.example
+
+# ASP.NET Core Configuration & Secrets
+backend/**/appsettings.json
+backend/**/appsettings.*.json
+!backend/**/appsettings.Example.json
+!backend/**/appsettings.example.json
 
 # .NET & C#
 bin/

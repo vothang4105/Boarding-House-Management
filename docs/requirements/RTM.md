@@ -68,8 +68,8 @@ Tài liệu này đóng vai trò là chiếc cầu nối kỹ thuật hai chiề
 | **FR-22** | Cấu trúc hóa đơn đầy đủ các khoản mục | **[M]** | Hệ thống | `Invoice` | BR-01 -> BR-05 | Sprint 2 / Ngày 49 | Unit test kiểm tra công thức tổng tiền hóa đơn |
 | **FR-23** | Thêm/sửa khoản phụ thu trước khi phát hành | **[S]** | Owner, Manager | `Invoice` (AdditionalCharge) | - | Sprint 2 / Ngày 50 | API & UI test điều chỉnh phụ thu trạng thái DRAFT |
 | **FR-24** | Gửi hóa đơn qua Email (Resend) + In-app | **[M]** | Hệ thống | `Notification`, Resend API | - | Sprint 2 / Ngày 51 | Integration test gửi mail mẫu hóa đơn đến hộp thư test |
-| **FR-25** | Thanh toán qua QR VNPay Sandbox / Tiền mặt | **[M]** | Tenant, Manager | `Invoice`, VNPay Gateway | - | Sprint 2 / Ngày 52 | E2E Sandbox payment flow (Quét QR thành công) |
-| **FR-26** | Đối soát thanh toán VNPay tự động qua IPN Callback | **[M]** | Hệ thống | `Invoice` (Status = PAID) | - | Sprint 2 / Ngày 53 | Webhook verification test: checksum hash + đổi trạng thái |
+| **FR-25** | Khách thuê đóng tiền qua mã QR VietQR (SePay) hoặc đánh dấu "đã đóng tiền mặt" | **[M]** | Tenant, Manager | `Invoice`, SePay VietQR Gateway | CR-01 | Sprint 2 / Ngày 52 | E2E VietQR payment flow: Quét mã QR SePay / Test mode |
+| **FR-26** | Đối soát thanh toán tự động qua SePay Webhook (xác thực API Key/HMAC & bóc tách mã hóa đơn) | **[M]** | Hệ thống | `Invoice` (Status = PAID, PaymentMethod = SEPAY) | CR-01 | Sprint 2 / Ngày 53 | Webhook verification test: API Key auth + bóc tách mã HĐ + đổi trạng thái |
 | **FR-27** | Hóa đơn có 4 trạng thái (Nháp, Đã gửi, Đã trả, Quá hạn) | **[M]** | Hệ thống | `Invoice` (Status Enum) | - | Sprint 2 / Ngày 54 | State machine validation test |
 | **FR-28** | Tự động chuyển Quá hạn sau ngày 5 tháng tiếp theo | **[M]** | Hệ thống | `Invoice` | BR-08, BR-09 | Sprint 2 / Ngày 54 | Cronjob test chuyển trạng thái OVERDUE sau 23:59 ngày 5 |
 | **FR-29** | In / Xuất hóa đơn ra file PDF chuẩn định dạng VNĐ | **[S]** | Owner, Manager, Tenant | `Invoice`, PDF Renderer | NFR-12 | Sprint 2 / Ngày 55 | Kiểm tra định dạng tiền tệ và layout trang in PDF |
