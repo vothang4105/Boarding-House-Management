@@ -379,3 +379,106 @@
 ### 4. Đánh giá sẵn sàng cho Ngày 6 (DAY-006)
 - Toàn bộ hạ tầng dịch vụ bên thứ ba (Supabase, SePay, Email) đã được chốt và đồng bộ tài liệu kiến trúc.
 - Sẵn sàng bước sang **Ngày 6:** Viết tài liệu Vision & Scope hoàn chỉnh, phân tích chi tiết User Roles & Use Case tổng thể cho 3 nhóm đối tượng: Chủ trọ (Owner), Quản lý dãy (Manager), và Khách thuê (Tenant).
+
+
+## [DAY-006] - 2026-11-16 - Chốt Tài liệu Vision & Scope và Đặc tả Chi tiết Các Vai trò (Stakeholders & Roles)
+
+### 1. Thông tin chung
+- **Task ID:** DAY-006
+- **Trạng thái:** COMPLETED
+- **Vai trò thực hiện:** Developer Agent (hỗ trợ Tech Lead / Solo Dev)
+- **Tài liệu căn cứ:** `docs/planning/MASTER_PLAN.md`, `docs/requirements/SRS.md`, `docs/CR-01_Change_Payment_Gateway_To_SePay.md`, `docs/01_scope_and_entities.md`, `docs/planning/daily-plans/DAY-006.md`
+
+---
+
+### 2. Chi tiết kết quả thực hiện
+
+#### Task 1: Khởi động & Chốt mục tiêu ngày (08:30 – 09:00)
+- Đã rà soát toàn bộ 5 mục tiêu kinh doanh (`BG-01` đến `BG-05`) từ SRS Mục 1.2.
+- Đã đối chiếu quy tắc phân quyền Manager (`BR-14`) và yêu cầu bảo mật endpoint (`NFR-05`) từ SRS Mục 4, Mục 5.
+- Đã kiểm tra phiếu Change Request `CR-01` để đảm bảo phạm vi In-Scope phản ánh đúng giải pháp SePay VietQR + Webhook.
+
+#### Task 2: Deep Work 1 – Viết Tài liệu Vision & Scope (`docs/02_vision_and_scope.md`) (09:00 – 12:00)
+Hoàn thành biên soạn tài liệu gồm 7 mục chính:
+
+**Mục 1 — Bối cảnh & Bài toán chuyển đổi số:**
+- Mô tả chi tiết hiện trạng vận hành 3 dãy (64 phòng) tại Làng Đại học Thủ Đức của chị Nguyễn Thị Lan.
+- Phân tích 6 bất cập cốt lõi: chốt tiền chậm (2 ngày), sai sót tính tiền, quên gia hạn, thiếu báo cáo tài chính, hợp đồng giấy thất lạc, quản lý sự cố qua Zalo.
+- Đề xuất giải pháp: Web App responsive MBHMS tự động hóa toàn bộ chu trình.
+
+**Mục 2 — Mục tiêu kinh doanh (BG-01 → BG-05) kèm KPI:**
+
+| Mã | Chỉ số đo lường | Hiện tại → Mục tiêu |
+| :--- | :--- | :--- |
+| `BG-01` | Thời gian chốt tiền | 2 ngày → < 2 giờ |
+| `BG-02` | Tỷ lệ phòng trống | Không đo được → < 5% |
+| `BG-03` | Vụ tranh chấp sai số | 2–3 vụ/tháng → 0 vụ/tháng |
+| `BG-04` | Báo cáo tài chính | Không có → Báo cáo P&L real-time |
+| `BG-05` | Số hóa hợp đồng | 0% → 100% |
+
+**Mục 3 — Ranh giới phạm vi (In-Scope / Out-of-Scope):**
+- **In-Scope (10 hạng mục):** Web App responsive, Quản lý dãy/phòng, Hợp đồng, Ghi điện Offline-first, Tự động sinh hóa đơn, SePay VietQR + Webhook (CR-01), Ticket sự cố, Email + In-app, Dashboard/Báo cáo, RBAC & Data Isolation.
+- **Out-of-Scope (6 hạng mục):** Native app, IoT, Zalo/SMS, Đa ngôn ngữ, Quản lý nhân sự/bán hàng, Lãi phạt tự động.
+
+#### Task 3: Deep Work 2 – Thiết kế Ma trận Phân quyền & Cô lập Dữ liệu (13:30 – 17:00)
+
+**Mục 4 — Đặc tả 4 nhóm người dùng:**
+
+| Role | Số lượng | Phạm vi dữ liệu | Thiết bị |
+| :--- | :--- | :--- | :--- |
+| Owner | 1 | Toàn hệ thống (3 dãy) | Laptop & Mobile |
+| Manager | 1–3 | Bị cô lập theo dãy (BR-14) | Mobile |
+| Tenant | ~64–100 | Chỉ dữ liệu bản thân | Mobile |
+| Guest | Không giới hạn | Dữ liệu công khai | Mobile & Desktop |
+
+**Mục 5 — Ma trận Phân quyền RBAC Matrix:**
+- Xây dựng 8 bảng ma trận chi tiết phủ kín toàn bộ **48 yêu cầu chức năng** (FR-01 → FR-48).
+- Đánh dấu quyền CRUD/Execute cho 4 roles kèm ghi chú điều kiện Scope Filter.
+- Bảng tổng hợp quyền truy cập theo Module (9 module × 4 roles).
+
+**Mục 6 — Thiết kế kỹ thuật cô lập dữ liệu (BR-14 & NFR-05):**
+- Mô hình dữ liệu: Bảng trung gian `BuildingManagers` (`Id`, `UserId`, `BuildingId`, `AssignedAt`) — quan hệ N:N cho phép gán linh hoạt.
+- Kiến trúc bảo vệ 2 tầng (Defense in Depth):
+  - **Tầng 1 — API Authorization Middleware:** Custom `BuildingScopeRequirement` + `BuildingScopeHandler` kiểm tra Claims JWT và AssignedBuildingIds.
+  - **Tầng 2 — EF Core Global Query Filter:** Tự động áp `.Where(x => AssignedBuildingIds.Contains(x.BuildingId))` cho mọi truy vấn ở cấp DbContext.
+- Ma trận Scope Filter chi tiết cho 8 thực thể (Building, Room, Tenant, Contract, ElectricityReading, Invoice, Ticket, Notification).
+- 8 kịch bản kiểm thử phân quyền chéo (Cross-Scope Test Cases).
+
+**Mục 7 — Bảng thuật ngữ:** 16 thuật ngữ kỹ thuật và nghiệp vụ.
+
+#### Task 4: Nghiệm thu cuối ngày (DoD) & Commit
+- Đã đối chiếu nội dung `docs/02_vision_and_scope.md` với SRS Mục 1 (Tổng quan), Mục 2 (Stakeholders), Mục 3 (FR-01 → FR-48), Mục 4 (BR-14), Mục 5 (NFR-05), và phiếu CR-01.
+- Đã kiểm toán scope bằng `scripts/verify-scope.ps1 -PlanFile docs/planning/daily-plans/DAY-006.md`: **[SCOPE AUDIT PASSED]**.
+
+---
+
+### 3. Bảng tổng hợp File Changes
+
+| Hành động | File | Mô tả |
+| :---: | :--- | :--- |
+| ✅ Create | `docs/planning/daily-plans/DAY-006.md` | Kế hoạch thực hiện Ngày 6 |
+| ✅ Create | `docs/02_vision_and_scope.md` | Tài liệu Vision & Scope + RBAC Matrix (7 mục, ~450 dòng) |
+| ✅ Append | `docs/development/DEVELOPMENT_LOG.md` | Nhật ký phát triển Ngày 6 |
+
+---
+
+### 4. Kiểm chứng & Đo lường (Quality Gate)
+
+- **Kiểm toán Scope:** `scripts/verify-scope.ps1 -PlanFile docs/planning/daily-plans/DAY-006.md` → **[SCOPE AUDIT PASSED]**
+- **Tiêu chí nghiệm thu (Acceptance Criteria):** Đạt 9/9 (100%):
+  - [x] File `docs/02_vision_and_scope.md` biên soạn hoàn chỉnh, cấu trúc 7 mục mạch lạc.
+  - [x] 5 mục tiêu kinh doanh (BG-01 → BG-05) gắn chỉ số đo lường định lượng.
+  - [x] In-Scope / Out-of-Scope phản ánh SePay VietQR + Webhook (CR-01).
+  - [x] 4 roles (Owner, Manager, Tenant, Guest) đặc tả chi tiết đúng thực tế vận hành.
+  - [x] RBAC Matrix phủ kín 48 FRs (FR-01 → FR-48) kèm quyền CRUD và Scope Filter.
+  - [x] Thiết kế BR-14 & NFR-05: Bảng `BuildingManagers` + lọc 2 tầng (API Auth + EF Core GQF).
+  - [x] Scope Audit PASSED.
+  - [x] DEVELOPMENT_LOG.md cập nhật Append-Only.
+  - [x] Commit Git chuẩn Conventional Commits.
+
+---
+
+### 5. Đánh giá sẵn sàng cho Ngày 7 (DAY-007)
+- Tài liệu Vision & Scope (Mục 1 SRS) và Ma trận Phân quyền (Mục 2 SRS) đã chốt hoàn chỉnh.
+- Mô hình dữ liệu `BuildingManagers` và kiến trúc bảo vệ 2 tầng (BR-14, NFR-05) đã thiết kế chi tiết.
+- Sẵn sàng bước sang **Ngày 7:** Dựng khung Project Backend bằng ASP.NET Core Web API Clean Architecture.
