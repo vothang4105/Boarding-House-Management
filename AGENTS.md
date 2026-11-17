@@ -30,11 +30,19 @@ In this workspace, we adhere to the **Daily Plan-Driven Development** methodolog
 5. **Verified Evidence in Logs:**
    - Never report tests or builds as "PASS" unless actually executed and verified.
    - The `DEVELOPMENT_LOG.md` is strictly **Append-Only**; historical entries must never be modified or deleted.
-6. **5-Day Comprehensive Review & Main Branch Release Cadence:**
-   - **Chu kỳ 5 ngày (Định kỳ vào cuối Ngày 5, Ngày 10, Ngày 15, Ngày 20, ...):**
-     - Thực hiện rà soát, kiểm tra toàn diện một lượt (Full System Review):
-       1. **Build Quality:** Biên dịch toàn bộ Solution Backend & Frontend đảm bảo 0 Errors, 0 Warnings.
-       2. **Test Quality:** Chạy toàn bộ các bộ kiểm thử tự động (Unit / Integration Tests) đạt kết quả 100% PASS.
-       3. **Scope & Security Audit:** Chạy script kiểm toán phạm vi tệp, rà soát bảo mật, đảm bảo không có mã nguồn ngoài luồng hay cấu hình lộ lọt.
-       4. **Documentation Sync:** Rà soát tính toàn vẹn của `DEVELOPMENT_LOG.md`, ma trận `RTM.md`, và các Daily Plans trong chặng 5 ngày.
-     - Sau khi toàn bộ các bước kiểm tra đạt yêu cầu (Definition of Done của chặng 5 ngày), tiến hành merge nhánh `develop` vào nhánh `main` và push lên remote `origin/main`.
+6. **Phase-End Comprehensive Review & Main Branch Release Cadence:**
+   - **Chu kỳ theo từng Giai đoạn (Cuối Giai đoạn 1 đến 7 theo `MASTER_PLAN.md`):**
+     - Các mốc phát hành (Milestone Release Points):
+       - **Giai đoạn 1 (Cuối Ngày 10):** Hoàn thành chuẩn bị hạ tầng, cấu trúc Monorepo, Backend, Frontend, Docker & CI/CD.
+       - **Giai đoạn 2 (Cuối Ngày 25):** Hoàn thành phân tích nghiệp vụ, tài liệu SRS, ERD, Use Cases, Wireframes/Figma.
+       - **Giai đoạn 3 (Cuối Ngày 45):** Hoàn thành Sprint 1 (Auth, Dãy trọ, Phòng & Hợp đồng).
+       - **Giai đoạn 4 (Cuối Ngày 55):** Hoàn thành Sprint 2 (Điện nước Offline-first, Hóa đơn & SePay VietQR).
+       - **Giai đoạn 5 (Cuối Ngày 65):** Hoàn thành Sprint 3 (Sự cố Tickets, Thông báo In-app/Email & Dashboard).
+       - **Giai đoạn 6 (Cuối Ngày 75):** Hoàn thành Tích hợp E2E, UAT & Tối ưu hiệu năng.
+       - **Giai đoạn 7 (Cuối Ngày 80):** Nghiệm thu toàn bộ sản phẩm và bàn giao dự án.
+     - **Quy trình nghiệm thu cuối mỗi Giai đoạn (Phase Review):**
+       1. **Build Quality:** Biên dịch sạch toàn bộ Solution Backend (.NET 10) & Frontend (Next.js) đảm bảo 0 Errors, 0 Warnings.
+       2. **Test Quality:** Chạy toàn bộ các bộ kiểm thử tự động (Unit / Integration Tests) đạt 100% PASS.
+       3. **Scope & Security Audit:** Chạy script kiểm toán phạm vi tệp, rà soát bảo mật không để lộ credentials thật.
+       4. **Documentation & RTM Sync:** Rà soát tính toàn vẹn của `DEVELOPMENT_LOG.md`, ma trận `RTM.md`, và các Daily Plans trong toàn bộ giai đoạn.
+     - Sau khi vượt qua Definition of Done của Giai đoạn, tiến hành merge nhánh `develop` vào nhánh `main`, tạo Git Tag mốc giai đoạn (vd: `v0.1-phase1`), và push lên remote `origin/main`.
