@@ -30,3 +30,11 @@ In this workspace, we adhere to the **Daily Plan-Driven Development** methodolog
 5. **Verified Evidence in Logs:**
    - Never report tests or builds as "PASS" unless actually executed and verified.
    - The `DEVELOPMENT_LOG.md` is strictly **Append-Only**; historical entries must never be modified or deleted.
+6. **5-Day Comprehensive Review & Main Branch Release Cadence:**
+   - **Chu kỳ 5 ngày (Định kỳ vào cuối Ngày 5, Ngày 10, Ngày 15, Ngày 20, ...):**
+     - Thực hiện rà soát, kiểm tra toàn diện một lượt (Full System Review):
+       1. **Build Quality:** Biên dịch toàn bộ Solution Backend & Frontend đảm bảo 0 Errors, 0 Warnings.
+       2. **Test Quality:** Chạy toàn bộ các bộ kiểm thử tự động (Unit / Integration Tests) đạt kết quả 100% PASS.
+       3. **Scope & Security Audit:** Chạy script kiểm toán phạm vi tệp, rà soát bảo mật, đảm bảo không có mã nguồn ngoài luồng hay cấu hình lộ lọt.
+       4. **Documentation Sync:** Rà soát tính toàn vẹn của `DEVELOPMENT_LOG.md`, ma trận `RTM.md`, và các Daily Plans trong chặng 5 ngày.
+     - Sau khi toàn bộ các bước kiểm tra đạt yêu cầu (Definition of Done của chặng 5 ngày), tiến hành merge nhánh `develop` vào nhánh `main` và push lên remote `origin/main`.
