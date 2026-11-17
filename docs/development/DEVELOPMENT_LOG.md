@@ -482,3 +482,146 @@ Hoàn thành biên soạn tài liệu gồm 7 mục chính:
 - Tài liệu Vision & Scope (Mục 1 SRS) và Ma trận Phân quyền (Mục 2 SRS) đã chốt hoàn chỉnh.
 - Mô hình dữ liệu `BuildingManagers` và kiến trúc bảo vệ 2 tầng (BR-14, NFR-05) đã thiết kế chi tiết.
 - Sẵn sàng bước sang **Ngày 7:** Dựng khung Project Backend bằng ASP.NET Core Web API Clean Architecture.
+
+
+## [DAY-007] - 2026-11-17 - Dựng Khung Kiến trúc Backend (.NET 10 Clean Architecture) & Cấu hình Lõi
+
+### 1. Thông tin chung
+- **Task ID:** DAY-007
+- **Trạng thái:** COMPLETED
+- **Vai trò thực hiện:** Developer Agent
+- **Tài liệu căn cứ:** `docs/planning/daily-plans/DAY-007.md`, `docs/02_vision_and_scope.md`, `docs/requirements/SRS.md`, `docs/requirements/RTM.md`
+
+---
+
+### 2. Chi tiết kết quả thực hiện
+
+#### Task 1: Khởi động & Chốt mục tiêu ngày (08:30 – 09:00)
+- Thiết lập trạng thái 3 thẻ công việc của Ngày 7 trên Kanban sang cột `Today`:
+  1. Khởi tạo Solution .NET 10 chia 4 tầng (Domain, Application, Infrastructure, WebApi) + UnitTests.
+  2. Cài đặt các NuGet Packages cốt lõi & cấu hình Dependency Injection.
+  3. Thiết lập Swagger (hỗ trợ JWT), Global Exception Middleware & Múi giờ UTC+7.
+- Rà soát các ràng buộc kỹ thuật cốt lõi:
+  - `NFR-04`: Chuẩn bị thư viện BCrypt.Net-Next với Work Factor = 11 (cost $\ge$ 10).
+  - `NFR-05`: Thiết lập Swagger UI tích hợp Bearer JWT Authorization Scheme để kiểm thử phân quyền 4 Roles.
+  - `NFR-11`: Xây dựng AuditableEntitySaveChangesInterceptor phục vụ tự động lưu thông tin Audit Log cho Hợp đồng và Hóa đơn.
+  - `NFR-12`: Chuẩn hóa phản hồi API qua `ApiResponse<T>` với thông điệp tiếng Việt.
+  - `NFR-13`: Khóa cứng múi giờ Việt Nam `Asia/Ho_Chi_Minh` (UTC+7) trên toàn bộ hệ thống.
+
+#### Task 2: Deep Work 1 – Khởi tạo Cấu trúc 4 Tầng Clean Architecture & Projects (09:00 – 12:00)
+- Đã khởi tạo Solution `backend/MBHMS.sln` và 5 Projects .NET 10:
+  - `MBHMS.Domain` (Class Library - net10.0): Tầng trung tâm thuần C#, không phụ thuộc thư viện ngoài.
+  - `MBHMS.Application` (Class Library - net10.0): Tầng nghiệp vụ, tham chiếu `Domain`.
+  - `MBHMS.Infrastructure` (Class Library - net10.0): Tầng hạ tầng dữ liệu và tích hợp dịch vụ, tham chiếu `Application`.
+  - `MBHMS.WebApi` (ASP.NET Core Web API - net10.0): Tầng REST API, tham chiếu `Application` và `Infrastructure`.
+  - `MBHMS.UnitTests` (xUnit Test Project - net10.0): Nằm tại `backend/tests/MBHMS.UnitTests`, tham chiếu `Domain`, `Application`, và `Infrastructure`.
+- Đã hoàn thiện tầng **`MBHMS.Domain`**:
+  - `Common/BaseEntity.cs`: Thực thể cơ sở chứa khóa chính `Guid Id`.
+  - `Common/AuditableEntity.cs`: Kế thừa `BaseEntity`, bổ sung `CreatedAt`, `CreatedBy`, `UpdatedAt`, `UpdatedBy` (phục vụ NFR-11).
+  - `Common/IDateTimeProvider.cs`: Interface cung cấp thời gian hệ thống.
+  - `Constants/BusinessRulesConstants.cs`: Định nghĩa đầy đủ hằng số cho 14 quy tắc nghiệp vụ (`BR-01` đến `BR-14`).
+  - `Enums/`: 8 Enums nghiệp vụ (`UserRole`, `RoomType`, `RoomStatus`, `InvoiceStatus`, `TicketStatus`, `TicketPriority`, `PaymentMethod`, `NotificationType`).
+  - `Exceptions/`: 5 lớp ngoại lệ nghiệp vụ (`DomainException`, `BusinessRuleException`, `NotFoundException`, `ForbiddenAccessException`, `ValidationException`).
+- Đã hoàn thiện tầng **`MBHMS.Application`**:
+  - `Common/Models/ApiResponse.cs`: Cấu trúc JSON thống nhất toàn hệ thống (`Success`, `Message`, `Data`, `Errors`, `Timestamp`).
+  - `Common/Models/PagedResponse.cs`: Cấu trúc trả về danh sách phân trang.
+  - `Common/Interfaces/`: 5 Interfaces dịch vụ (`IApplicationDbContext`, `ICurrentUserService`, `ISePayService`, `IStorageService`, `IEmailService`).
+  - `DependencyInjection.cs`: Phương thức mở rộng `AddApplicationServices()` tích hợp FluentValidation.
+- Đã hoàn thiện tầng **`MBHMS.Infrastructure`**:
+  - `Services/DateTimeProvider.cs`: Triển khai `IDateTimeProvider` cố định múi giờ `Asia/Ho_Chi_Minh` / `SE Asia Standard Time` (UTC+7).
+  - `Security/BcryptPasswordHasher.cs`: Triển khai mã hóa mật khẩu Bcrypt với Work Factor = 11 (`NFR-04`).
+  - `Persistence/AppDbContext.cs`: Khung DbContext kế thừa EF Core và triển khai `IApplicationDbContext`.
+  - `Persistence/Interceptors/AuditableEntitySaveChangesInterceptor.cs`: Tự động điền ngày giờ UTC+7 và User tác động khi `SaveChanges` (`NFR-11`).
+  - `DependencyInjection.cs`: Phương thức mở rộng `AddInfrastructureServices()` đăng ký DbContext PostgreSQL, Interceptor, DateTimeProvider.
+
+#### Task 3: Deep Work 2 – Cài đặt Thư viện Lõi, Swagger & Chuẩn hóa Hệ thống (13:30 – 17:00)
+- Đã cài đặt bộ NuGet Packages nền tảng:
+  - Infrastructure: `Npgsql.EntityFrameworkCore.PostgreSQL` (v10.0.3), `Microsoft.EntityFrameworkCore.Tools` (v10.0.4), `BCrypt.Net-Next` (v4.0.3).
+  - Application: `FluentValidation.DependencyInjectionExtensions` (v11.11.0).
+  - WebApi: `Microsoft.AspNetCore.Authentication.JwtBearer` (v10.0.14), `Swashbuckle.AspNetCore` (v10.3.1).
+- Khóa cứng múi giờ `Asia/Ho_Chi_Minh` (UTC+7) trên toàn bộ dịch vụ backend qua `DateTimeProvider`.
+- Triển khai `GlobalExceptionHandler` theo chuẩn .NET 10 `IExceptionHandler`:
+  - Phân loại lỗi và trả về HTTP Status Codes chuẩn (400 cho Validation/BusinessRule, 401 Unauthorized, 403 Forbidden, 404 NotFound, 500 InternalServerError).
+  - Định dạng JSON trả về chuẩn `ApiResponse<T>` với thông báo tiếng Việt (`NFR-12`).
+- Cấu hình Swagger UI tích hợp xác thực JWT Bearer (`NFR-05`):
+  - Hiển thị nút `Authorize` trên Swagger UI để nhập Bearer Token kiểm thử trực tiếp trên trình duyệt.
+- Xây dựng `HealthController` với endpoint `GET /api/health`:
+  - Trả về mã HTTP 200 kèm `status: "Healthy"`, `timeZone: "Asia/Ho_Chi_Minh (UTC+7)"`, `serverTime` mang độ lệch chuẩn `+07:00`.
+- Viết 13 Unit Tests kiểm thử tự động (`MBHMS.UnitTests`):
+  - `DateTimeProviderTests`: Kiểm tra độ lệch múi giờ luôn là +07:00, giờ Now đi trước UtcNow 7 tiếng, ngày Today khớp chính xác.
+  - `BusinessRulesConstantsTests`: Kiểm tra tính toán tiền điện BR-01, tiền nước BR-02, sức chứa BR-06, chu kỳ ngày 28 và hạn ngày 5 (BR-07, BR-08), công thức phạt cọc 50% khi chấm dứt HĐ < 30 ngày (BR-11), độ dài CCCD 12 ký tự (BR-13), và Bcrypt cost $\ge 10$ (NFR-04).
+
+#### Task 4: Nghiệm thu cuối ngày (DoD) & Bàn giao (17:00 – 17:30)
+- **Biên dịch:** `dotnet build backend/MBHMS.sln` $\rightarrow$ **0 Errors, 0 Warnings**.
+- **Kiểm thử Unit Tests:** `dotnet test backend/MBHMS.sln` $\rightarrow$ **13/13 Passed (100%)**.
+- **Kiểm thử Runtime:** Chạy thực tế WebApi server, gọi thành công endpoint `GET /api/health` trả về JSON chuẩn UTC+7 và Swagger document `/swagger/v1/swagger.json` chứa Security Scheme `Bearer`.
+- **Kiểm toán Scope:** `powershell -File scripts/verify-scope.ps1 -PlanFile docs/planning/daily-plans/DAY-007.md` $\rightarrow$ **[SCOPE AUDIT PASSED]**.
+- **Kanban:** Kéo toàn bộ 3 thẻ công việc Ngày 7 sang cột `Done`.
+
+---
+
+### 3. Bảng tổng hợp File Changes
+
+| Hành động | File | Mô tả |
+| :---: | :--- | :--- |
+| ✅ Create | `docs/planning/daily-plans/DAY-007.md` | Kế hoạch thực hiện chi tiết Ngày 7 |
+| ✅ Modify | `backend/MBHMS.sln` | Thêm 5 projects vào solution |
+| ✅ Create | `backend/src/MBHMS.Domain/` | Cấu trúc tầng Domain (.NET 10 Class Library) |
+| ✅ Create | `backend/src/MBHMS.Domain/Common/BaseEntity.cs` | Base Entity với khóa chính Guid Id |
+| ✅ Create | `backend/src/MBHMS.Domain/Common/AuditableEntity.cs` | Auditable Entity với CreatedAt, CreatedBy, UpdatedAt, UpdatedBy |
+| ✅ Create | `backend/src/MBHMS.Domain/Common/IDateTimeProvider.cs` | Interface trích xuất thời gian hệ thống |
+| ✅ Create | `backend/src/MBHMS.Domain/Constants/BusinessRulesConstants.cs` | Hằng số quy tắc nghiệp vụ BR-01 đến BR-14 |
+| ✅ Create | `backend/src/MBHMS.Domain/Enums/` (8 files) | UserRole, RoomType, RoomStatus, InvoiceStatus, TicketStatus, TicketPriority, PaymentMethod, NotificationType |
+| ✅ Create | `backend/src/MBHMS.Domain/Exceptions/` (5 files) | DomainException, BusinessRuleException, NotFoundException, ForbiddenAccessException, ValidationException |
+| ✅ Create | `backend/src/MBHMS.Application/` | Cấu trúc tầng Application (.NET 10 Class Library) |
+| ✅ Create | `backend/src/MBHMS.Application/DependencyInjection.cs` | DI Module đăng ký Validators tầng Application |
+| ✅ Create | `backend/src/MBHMS.Application/Common/Models/ApiResponse.cs` | Chuẩn phản hồi JSON thống nhất ApiResponse<T> |
+| ✅ Create | `backend/src/MBHMS.Application/Common/Models/PagedResponse.cs` | Chuẩn dữ liệu phân trang danh sách |
+| ✅ Create | `backend/src/MBHMS.Application/Common/Interfaces/` (5 files) | IApplicationDbContext, ICurrentUserService, ISePayService, IStorageService, IEmailService |
+| ✅ Create | `backend/src/MBHMS.Infrastructure/` | Cấu trúc tầng Infrastructure (.NET 10 Class Library) |
+| ✅ Create | `backend/src/MBHMS.Infrastructure/DependencyInjection.cs` | DI Module đăng ký DbContext PostgreSQL, Interceptor, DateTimeProvider |
+| ✅ Create | `backend/src/MBHMS.Infrastructure/Services/DateTimeProvider.cs` | DateTimeProvider khóa cứng múi giờ Asia/Ho_Chi_Minh (UTC+7) |
+| ✅ Create | `backend/src/MBHMS.Infrastructure/Security/BcryptPasswordHasher.cs` | Bộ mã hóa mật khẩu Bcrypt (Work Factor = 11) |
+| ✅ Create | `backend/src/MBHMS.Infrastructure/Persistence/AppDbContext.cs` | EF Core DbContext kết nối PostgreSQL Npgsql |
+| ✅ Create | `backend/src/MBHMS.Infrastructure/Persistence/Interceptors/AuditableEntitySaveChangesInterceptor.cs` | Interceptor tự động ghi Audit Log cho Hợp đồng và Hóa đơn |
+| ✅ Create | `backend/src/MBHMS.WebApi/` | Cấu trúc tầng WebApi (.NET 10 ASP.NET Core Web API) |
+| ✅ Create | `backend/src/MBHMS.WebApi/Program.cs` | Pipeline cấu hình Clean Architecture, JWT, Swagger, CORS, Exception Handler |
+| ✅ Create | `backend/src/MBHMS.WebApi/Middlewares/GlobalExceptionHandler.cs` | Global Exception Handler theo chuẩn IExceptionHandler .NET 10 |
+| ✅ Create | `backend/src/MBHMS.WebApi/Controllers/BaseApiController.cs` | Base Controller định tuyến API |
+| ✅ Create | `backend/src/MBHMS.WebApi/Controllers/HealthController.cs` | Health Controller với endpoint GET /api/health (UTC+7) |
+| ✅ Create | `backend/src/MBHMS.WebApi/Properties/launchSettings.json` | Cấu hình profile khởi chạy WebApi |
+| ✅ Create | `backend/src/MBHMS.WebApi/appsettings.json` | Cấu hình môi trường WebApi (PostgreSQL, SePay, Supabase, JWT) |
+| ✅ Create | `backend/src/MBHMS.WebApi/appsettings.Development.json` | Cấu hình môi trường phát triển Development |
+| ✅ Create | `backend/tests/MBHMS.UnitTests/` | Dự án kiểm thử UnitTests (.NET 10 xUnit) |
+| ✅ Create | `backend/tests/MBHMS.UnitTests/Common/DateTimeProviderTests.cs` | Unit tests kiểm thử múi giờ UTC+7 của DateTimeProvider |
+| ✅ Create | `backend/tests/MBHMS.UnitTests/Domain/BusinessRulesConstantsTests.cs` | Unit tests kiểm thử các hằng số và công thức BR-01, BR-02, BR-11,... |
+| ✅ Append | `docs/development/DEVELOPMENT_LOG.md` | Nhật ký phát triển Ngày 7 |
+
+---
+
+### 4. Kiểm chứng & Đo lường (Quality Gate)
+
+- **Biên dịch Solution:** `dotnet build backend/MBHMS.sln` $\rightarrow$ **Build succeeded (0 Errors, 0 Warnings)**.
+- **Kiểm thử tự động:** `dotnet test backend/MBHMS.sln` $\rightarrow$ **13/13 Tests Passed (100%)**.
+- **Kiểm tra HealthCheck:** `GET http://localhost:5143/api/health` $\rightarrow$ **HTTP 200 OK**, `status: "Healthy"`, `serverTime` có offset `+07:00`.
+- **Kiểm tra Swagger UI & JSON:** `GET http://localhost:5143/swagger/v1/swagger.json` $\rightarrow$ **HTTP 200 OK**, chứa định nghĩa `securitySchemes.Bearer`.
+- **Kiểm toán Scope:** `scripts/verify-scope.ps1 -PlanFile docs/planning/daily-plans/DAY-007.md` $\rightarrow$ **[SCOPE AUDIT PASSED]**.
+- **Tiêu chí nghiệm thu (Acceptance Criteria):** Đạt 12/12 (100%):
+  - [x] Lệnh `dotnet build backend/MBHMS.sln` chạy thành công với 0 Errors, 0 Warnings.
+  - [x] Lệnh `dotnet test backend/MBHMS.sln` thực thi toàn bộ unit tests đạt kết quả PASS (13/13).
+  - [x] Tầng `MBHMS.Domain` hoàn toàn thuần C#, không tham chiếu bất kỳ thư viện bên ngoài nào.
+  - [x] Tầng `MBHMS.Application` tham chiếu Domain, `MBHMS.Infrastructure` tham chiếu Application, `MBHMS.WebApi` tham chiếu Application & Infrastructure.
+  - [x] Dependency Injection được đóng gói qua `AddApplicationServices()` và `AddInfrastructureServices()`.
+  - [x] Lớp `DateTimeProvider` trả về đúng thời gian chuẩn `Asia/Ho_Chi_Minh` (offset `+07:00`).
+  - [x] Endpoint `GET /api/health` trả về HTTP 200 kèm JSON đúng định dạng `ApiResponse<T>` và serverTime mang offset `+07:00`.
+  - [x] Swagger UI khởi chạy thành công tại `/swagger`, tích hợp nút Authorize cho Bearer Token.
+  - [x] `GlobalExceptionHandler` bắt đúng các ngoại lệ nghiệp vụ và trả về JSON tiếng Việt chuẩn `NFR-12`.
+  - [x] Kiểm toán scope bằng script `scripts/verify-scope.ps1` đạt kết quả PASS.
+  - [x] Nhật ký `docs/development/DEVELOPMENT_LOG.md` được cập nhật đầy đủ (tuân thủ Append-Only).
+  - [x] Sẵn sàng commit Git chuẩn Conventional Commits: `feat(backend): scaffold .NET 10 Clean Architecture solution with Swagger and UTC+7 config`.
+
+---
+
+### 5. Đánh giá sẵn sàng cho Ngày 8 (DAY-008)
+- Bộ khung Backend .NET 10 Clean Architecture đã hoạt động hoàn hảo, chuẩn hóa đầy đủ cấu hình DI, Swagger Bearer JWT, Global Exception Handler và múi giờ Việt Nam.
+- Sẵn sàng bước sang **Ngày 8:** Dựng khung Project Frontend bằng Next.js (App Router) + TypeScript + Tailwind CSS + shadcn/ui.
