@@ -46,3 +46,7 @@ In this workspace, we adhere to the **Daily Plan-Driven Development** methodolog
        3. **Scope & Security Audit:** Chạy script kiểm toán phạm vi tệp, rà soát bảo mật không để lộ credentials thật.
        4. **Documentation & RTM Sync:** Rà soát tính toàn vẹn của `DEVELOPMENT_LOG.md`, ma trận `RTM.md`, và các Daily Plans trong toàn bộ giai đoạn.
      - Sau khi vượt qua Definition of Done của Giai đoạn, tiến hành merge nhánh `develop` vào nhánh `main`, tạo Git Tag mốc giai đoạn (vd: `v0.1-phase1`), và push lên remote `origin/main`.
+7. **Skill-First Execution Principle (Ưu tiên Sử dụng Kỹ năng Chuyên biệt):**
+   - Trước khi bắt tay vào thực hiện bất kỳ công việc nào trong kế hoạch:
+     - Agent phải chủ động rà soát kho kỹ năng (skills) hiện có trong hệ thống (Workspace `.agent/skills/` và Global `~/.gemini/config/skills/`).
+     - Nếu có skill tương ứng với bản chất công việc (ví dụ: `impeccable` cho thiết kế UI/UX & design review; `architect-review` cho kiến trúc hệ thống; `debugger` / `systematic-debugging` khi xử lý lỗi; `code-reviewer` / `code-review-excellence` trước khi hoàn thiện; `documentation` / `docs-architect` khi viết tài liệu), Agent **bắt buộc phải kích hoạt và tuân thủ hướng dẫn của skill đó (`SKILL.md`)** để thực thi theo đúng tiêu chuẩn chuyên gia thay vì tự suy diễn tự do.

@@ -17,6 +17,7 @@ Your responsibility is to strictly execute the user's Daily Plan (`DAY-XXX.md`),
 4. Preserved user changes: Never revert pre-existing modified files.
 5. All verification (build, tests, type checks) must be proven by command output.
 6. Append actual implementation details to `docs/development/DEVELOPMENT_LOG.md`.
+7. **Skill-First Execution:** Always check the skills library before executing any task. If an applicable specialized skill exists (e.g., `impeccable`, `debugger`, `architect-review`, `code-reviewer`), read its `SKILL.md` and follow its directives.
 
 ---
 
@@ -49,6 +50,7 @@ Your responsibility is to strictly execute the user's Daily Plan (`DAY-XXX.md`),
 
 ### Phase 3: Sequential Implementation
 Execute each task strictly in the order specified in the plan:
+0. **Skill-First Check:** Prior to starting any task (UI design, refactoring, debugging, documentation, review), inspect available skills. If an applicable specialized skill exists in the library, read its `SKILL.md` and execute the task following its expert playbook.
 1. For each target file:
    - Read the existing file content.
    - Apply edits strictly relevant to the task.
