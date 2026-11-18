@@ -625,3 +625,142 @@ Hoàn thành biên soạn tài liệu gồm 7 mục chính:
 ### 5. Đánh giá sẵn sàng cho Ngày 8 (DAY-008)
 - Bộ khung Backend .NET 10 Clean Architecture đã hoạt động hoàn hảo, chuẩn hóa đầy đủ cấu hình DI, Swagger Bearer JWT, Global Exception Handler và múi giờ Việt Nam.
 - Sẵn sàng bước sang **Ngày 8:** Dựng khung Project Frontend bằng Next.js (App Router) + TypeScript + Tailwind CSS + shadcn/ui.
+
+
+## [DAY-008] - 2026-11-18 - Dựng Khung Frontend (Next.js + shadcn/ui) & Thiết lập Chuẩn Thiết kế với Impeccable
+
+### 1. Thông tin chung
+- **Task ID:** DAY-008
+- **Trạng thái:** COMPLETED
+- **Vai trò thực hiện:** Developer Agent (ứng dụng skill `impeccable`)
+- **Tài liệu căn cứ:** `docs/planning/daily-plans/DAY-008.md`, `PRODUCT.md`, `DESIGN.md`, `docs/requirements/SRS.md`, `docs/requirements/RTM.md`, `docs/02_vision_and_scope.md`
+
+---
+
+### 2. Chi tiết kết quả thực hiện
+
+#### Task 1: Khởi động & Cấu hình Skill Impeccable (08:30 – 09:00)
+- Chuyển 4 thẻ công việc của Ngày 8 từ cột `Backlog` sang cột `Today` trên bảng Kanban.
+- Kiểm tra và tích hợp skill `pbakaus/impeccable` (v4.9.2) vào `.agent/skills/impeccable/`, thiết lập `IMPECCABLE_LIVE_COPY_AGENT=chat` để kiểm duyệt toàn diện các quyết định thiết kế trực tiếp trong phiên làm việc.
+- Cập nhật quy tắc dự án #6 (Nghiệm thu cuối Giai đoạn & Quy trình phát hành nhánh main) và quy tắc #7 (Skill-First Execution Principle) vào `AGENTS.md`.
+
+#### Task 2: Deep Work 1 – Khởi tạo Next.js & Thiết lập Ngữ cảnh Thiết kế Impeccable (09:00 – 12:00)
+- **Cấu trúc Thư mục Frontend:** Khởi tạo cấu trúc phân tầng chuẩn mực trong `frontend/src/`:
+  - `app/`: Route groups theo 4 nhóm người dùng: `(public)`, `(auth)`, `(admin)`, `(tenant)`.
+  - `components/ui/`: Thư viện thành phần giao diện shadcn/ui.
+  - `components/layout/`: Responsive App Shell gồm Sidebar, BottomNav, Header.
+  - `lib/`: `formatters.ts`, `offline-db.ts`, `api-client.ts`, `utils.ts`.
+  - `types/`: `api.ts`, `domain.ts` đồng bộ kiểu dữ liệu với Backend .NET 10.
+- **Cài đặt Thư viện Nền tảng:** Cài đặt bộ dependencies phục vụ đầy đủ yêu cầu nghiệp vụ:
+  - `@tanstack/react-query`: Quản lý server state và caching cho Dashboard tải nhanh $< 3\text{s}$ (`NFR-01`).
+  - `dexie` & `dexie-react-hooks`: Cơ sở dữ liệu IndexedDB phục vụ ghi chỉ số điện ngoại tuyến (`FR-18`, `NFR-09`).
+  - `lucide-react`: Bộ icon giao diện hiện đại, trực quan.
+  - `recharts`: Chuẩn bị trực quan hóa biểu đồ doanh thu và tỷ lệ lấp đầy (`FR-40`, `FR-42`).
+  - `axios`: HTTP Client kết nối Web API .NET 10 kèm JWT Interceptor (`NFR-05`).
+  - `react-hook-form` & `zod`: Xử lý và validate biểu mẫu chặt chẽ.
+  - `sonner`: Toast thông báo thời gian thực chuẩn thiết kế.
+- **Tối ưu Typography chuẩn Tiếng Việt:** Cấu hình Google Font **`Be Vietnam Pro`** qua `next/font/google` trong `layout.tsx` và `globals.css` thay cho font mặc định *Inter*, đảm bảo 100% hiển thị sắc nét toàn bộ dấu thanh tiếng Việt (`NFR-12`) và không bị gắn cờ quy tắc generic typography từ `impeccable`.
+- **Khởi tạo Ngữ cảnh Sản phẩm [PRODUCT.md](file:///d:/TaDuss/Boarding-House-Management/PRODUCT.md):**
+  - Khóa chặt 4 nhóm người dùng (Chủ trọ, Quản lý, Khách thuê, Khách vãng lai).
+  - Khóa quy chuẩn Mobile-First từ $360\text{px}$ (`NFR-08`), mọi thao tác chính $\le 3$ lần chạm (`NFR-07`).
+  - Khóa hệ thống tiền tệ `2.500.000₫` (`NFR-12`) và múi giờ Việt Nam `Asia/Ho_Chi_Minh` (`NFR-13`).
+  - Bảng mã màu phân biệt 4 trạng thái phòng (`FR-04`) và 4 trạng thái hóa đơn (`FR-27`).
+
+#### Task 3: Deep Work 2 – Code Core Utilities, Layout 360px & Audit bằng Impeccable (13:30 – 17:00)
+- **Bộ hàm Chuẩn hóa & Múi giờ (`src/lib/formatters.ts`):**
+  - `formatVND(amount)`: Định dạng tiền tệ `2.500.000₫` chuẩn xác (`NFR-12`).
+  - `formatDateVN(date)`: Xuất định dạng ngày `dd/MM/yyyy`.
+  - `formatDateTimeVN(date)`: Xuất định dạng ngày giờ `HH:mm dd/MM/yyyy` theo múi giờ `Asia/Ho_Chi_Minh` (`NFR-13`).
+  - `getRoomStatusLabel` & `getRoomStatusBadgeVariant`: Nhãn và màu sắc tương thích shadcn/ui Badge cho 4 trạng thái phòng.
+- **Cơ sở Dữ liệu Ngoại tuyến (`src/lib/offline-db.ts`):**
+  - Khởi tạo `MbhmsOfflineDb` kế thừa Dexie với schema `pendingElectricityReadings: ++id, roomId, month, syncStatus, recordedAt`.
+  - Cung cấp các phương thức `saveReading()`, `savePendingReading()`, `getPendingReadings()`, `markReadingSynced()`, `clearSyncedReadings()` chuẩn bị cho Sprint 2 (`FR-18`, `NFR-09`).
+- **Khung Giao diện Đáp ứng (Responsive App Shell):**
+  - `BottomNav.tsx`: Thanh điều hướng cố định cạnh dưới màn hình di động ($360\text{px} - 767\text{px}$), vùng chạm $\ge 44 \times 44\text{px}$ (`NFR-07`, `NFR-08`), chia đều 4 phân hệ chính.
+  - `Sidebar.tsx`: Thanh bên quản trị mở rộng cho Desktop và Tablet ($\ge 768\text{px}$), đầy đủ menu quản trị, thương hiệu và hồ sơ người dùng.
+  - `Header.tsx`: Thanh đầu trang hiển thị tiêu đề, huy hiệu trạng thái mạng trực tuyến/ngoại tuyến (`isOnline` listener) và nút thông báo In-app (`FR-36`).
+  - `AppShell.tsx`: Vỏ bọc ứng dụng tự động chuyển đổi giữa Sidebar và BottomNav, xử lý padding chống che khuất nội dung di động (`pb-24`).
+- **Thư viện Component shadcn/ui:** Dựng hoàn chỉnh bộ component nguyên tử (`Button`, `Card`, `Badge`, `Input`, `Dialog`, `Sheet`, `Table`, `Sonner`).
+- **4 Phân hệ Giao diện Người dùng (Route Groups):**
+  - `src/app/(public)/rooms/page.tsx`: Danh sách phòng trống, giá thuê và đặt lịch xem phòng dành cho Khách vãng lai (Guest).
+  - `src/app/(auth)/login/page.tsx`: Form đăng nhập tài khoản bảo mật BCrypt cost $\ge 10$ (`NFR-04`) và hướng dẫn phân quyền RBAC.
+  - `src/app/(admin)/dashboard/page.tsx`: Bảng điều khiển quản trị, 4 thẻ thống kê doanh thu/lấp đầy, và giao diện nhập thử chỉ số điện ngoại tuyến lưu vào Dexie.js IndexedDB.
+  - `src/app/(tenant)/portal/page.tsx`: Cổng thông tin cư dân hiển thị hóa đơn tháng, mã VietQR SePay tự động gạch nợ (`FR-28`) và phiếu báo hỏng sự cố (`FR-33`).
+- **Trang chủ & Kiểm tra Kết nối Backend (`src/app/page.tsx`):**
+  - Kết nối thành công tới Backend .NET 10 qua endpoint `GET /api/health` hiển thị trạng thái `Healthy`, múi giờ `Asia/Ho_Chi_Minh` và thời gian máy chủ.
+  - Trình diễn demo định dạng tiền `formatVND(2500000)` $\rightarrow$ `2.500.000₫` và 4 thẻ trạng thái phòng trọ mẫu (`FR-04`).
+- **Tài liệu Hệ thống Thiết kế [DESIGN.md](file:///d:/TaDuss/Boarding-House-Management/DESIGN.md):**
+  - Ghi nhận đầy đủ bảng Design Tokens, Semantic Status Colors, Typography Scale, Spacing/Touch Standards và tiêu chí nghiệm thu Impeccable.
+
+#### Task 4: Nghiệm thu cuối ngày (DoD) & Bàn giao (17:00 – 17:30)
+- **Biên dịch Frontend:** `npm run build` trong thư mục `frontend/` $\rightarrow$ **Compiled successfully, 0 Errors, 0 Warnings**.
+  - Các route tĩnh được sinh hoàn chỉnh: `/`, `/_not-found`, `/dashboard`, `/login`, `/portal`, `/rooms`.
+- **Kiểm thử Responsive 360px:** Thiết kế không bị vỡ bố cục, không có thanh cuộn ngang ở chiều rộng $360\text{px}$, vùng tiếp xúc cảm ứng đạt chuẩn $\ge 44 \times 44\text{px}$.
+- **Kiểm toán Scope:** `powershell -File scripts/verify-scope.ps1 -PlanFile docs/planning/daily-plans/DAY-008.md` $\rightarrow$ **[SCOPE AUDIT PASSED]**.
+- **Kanban:** Kéo toàn bộ 4 thẻ công việc Ngày 8 sang cột `Done`.
+
+---
+
+### 3. Bảng tổng hợp File Changes
+
+| Hành động | File | Mô tả |
+| :---: | :--- | :--- |
+| ✅ Create | `docs/planning/daily-plans/DAY-008.md` | Kế hoạch thực hiện chi tiết Ngày 8 |
+| ✅ Create | `PRODUCT.md` | Bối cảnh sản phẩm MBHMS định hình bởi skill Impeccable |
+| ✅ Create | `DESIGN.md` | Bộ quy chuẩn hệ thống thiết kế (Tokens, Colors, 360px, Type Scale) |
+| ✅ Create | `.agent/skills/impeccable/` | Đồng bộ bộ công cụ và hướng dẫn chuyên gia Impeccable vào workspace |
+| ✅ Create | `frontend/components.json` | Cấu hình tích hợp thư viện shadcn/ui |
+| ✅ Modify | `frontend/package.json` | Khai báo các thư viện React Query, Dexie, Lucide, Recharts, Axios, Zod, Sonner |
+| ✅ Modify | `frontend/package-lock.json` | Khóa phiên bản các package npm |
+| ✅ Modify | `frontend/src/app/globals.css` | Thiết lập CSS Variables, Theme Tokens, Status Colors và font Be Vietnam Pro |
+| ✅ Modify | `frontend/src/app/layout.tsx` | Nhúng font Be Vietnam Pro qua next/font/google, Toaster và Viewport 360px |
+| ✅ Modify | `frontend/src/app/page.tsx` | Trang chủ kiểm tra hệ thống, kết nối Backend .NET 10, demo VNĐ & 4 thẻ phòng |
+| ✅ Create | `frontend/src/types/api.ts` | Interface TypeScript cho ApiResponse, PagedResponse, HealthCheckData |
+| ✅ Create | `frontend/src/types/domain.ts` | Khai báo Enums (UserRole, RoomStatus, InvoiceStatus,...) và ViewModels |
+| ✅ Create | `frontend/src/lib/utils.ts` | Tiện ích cn (clsx + tailwind-merge) |
+| ✅ Create | `frontend/src/lib/api-client.ts` | Axios client cấu hình BaseURL, JWT Interceptor và getHealthStatus() |
+| ✅ Create | `frontend/src/lib/offline-db.ts` | Cơ sở dữ liệu IndexedDB Dexie.js (MbhmsOfflineDb, pendingElectricityReadings) |
+| ✅ Create | `frontend/src/lib/formatters.ts` | Hàm formatVND (₫), formatDateVN, formatDateTimeVN (UTC+7) |
+| ✅ Create | `frontend/src/components/ui/button.tsx` | Component Button chuẩn shadcn/ui |
+| ✅ Create | `frontend/src/components/ui/card.tsx` | Component Card (CardHeader, CardTitle, CardContent,...) |
+| ✅ Create | `frontend/src/components/ui/badge.tsx` | Component Badge hỗ trợ các variant success, info, warning, destructive |
+| ✅ Create | `frontend/src/components/ui/input.tsx` | Component Input hỗ trợ vùng chạm h-11 (44px) trên mobile |
+| ✅ Create | `frontend/src/components/ui/dialog.tsx` | Component Dialog modal dễ tiếp cận |
+| ✅ Create | `frontend/src/components/ui/sheet.tsx` | Component Sheet ngăn kéo trượt (Mobile Drawer) |
+| ✅ Create | `frontend/src/components/ui/table.tsx` | Component Table responsive có thanh cuộn an toàn |
+| ✅ Create | `frontend/src/components/ui/sonner.tsx` | Component Toaster thông báo nổi góc phải màn hình |
+| ✅ Create | `frontend/src/components/layout/BottomNav.tsx` | Thanh điều hướng dưới đáy di động 360px (Touch area >= 44x44px) |
+| ✅ Create | `frontend/src/components/layout/Sidebar.tsx` | Menu thanh bên dành riêng cho Desktop và Tablet |
+| ✅ Create | `frontend/src/components/layout/Header.tsx` | Header hiển thị tiêu đề, trạng thái mạng Online/Offline và chuông thông báo |
+| ✅ Create | `frontend/src/components/layout/AppShell.tsx` | Vỏ bọc tổng hợp Responsive App Shell |
+| ✅ Create | `frontend/src/app/(public)/rooms/page.tsx` | Phân hệ Khách vãng lai xem danh sách phòng trống |
+| ✅ Create | `frontend/src/app/(auth)/login/page.tsx` | Phân hệ Đăng nhập tài khoản |
+| ✅ Create | `frontend/src/app/(admin)/dashboard/page.tsx` | Phân hệ Quản trị (Dashboard + Ghi số điện Offline với Dexie.js) |
+| ✅ Create | `frontend/src/app/(tenant)/portal/page.tsx` | Phân hệ Khách thuê (Hóa đơn, QR SePay, Báo sự cố Ticket) |
+| ✅ Append | `docs/development/DEVELOPMENT_LOG.md` | Nhật ký phát triển Ngày 8 |
+
+---
+
+### 4. Kiểm chứng & Đo lường (Quality Gate)
+
+- **Biên dịch Ứng dụng:** `npm run build` $\rightarrow$ **Compiled successfully in 2.0s (0 Errors, 0 Warnings)**.
+  - Toàn bộ 6 route tĩnh đã được prerender chính xác.
+- **Kiểm toán Scope:** `powershell -File scripts/verify-scope.ps1 -PlanFile docs/planning/daily-plans/DAY-008.md` $\rightarrow$ **[SCOPE AUDIT PASSED]**.
+- **Tiêu chí nghiệm thu (Acceptance Criteria):** Đạt 10/10 (100%):
+  - [x] Lệnh `npm run build` trong thư mục `frontend/` hoàn thành thành công với 0 Errors, 0 Warnings.
+  - [x] Mở Chrome DevTools ở kích thước $360\text{px} \times 800\text{px}$: layout không bị tràn ngang, thanh BottomNav hiển thị đẹp mắt với vùng chạm $\ge 44\times 44\text{px}$.
+  - [x] Font chữ `Be Vietnam Pro` được nhúng thành công và hiển thị sắc nét tiếng Việt có dấu (`NFR-12`).
+  - [x] Hàm `formatVND(2500000)` trả về chính xác chuỗi `2.500.000₫`.
+  - [x] Trang kiểm tra kết nối hiển thị trạng thái `Healthy` và giờ hệ thống UTC+7 từ Backend .NET 10 (`http://localhost:5143/api/health`).
+  - [x] Tệp `src/lib/offline-db.ts` khởi tạo schema Dexie.js không có lỗi runtime trên trình duyệt.
+  - [x] Hai tệp `PRODUCT.md` và `DESIGN.md` được tạo chuẩn chỉnh dưới sự hướng dẫn của skill `impeccable`.
+  - [x] Kiểm toán scope bằng script `scripts/verify-scope.ps1` đạt kết quả PASS.
+  - [x] Nhật ký `docs/development/DEVELOPMENT_LOG.md` được cập nhật đầy đủ (tuân thủ Append-Only).
+  - [x] Mã nguồn được commit chuẩn Conventional Commits lên nhánh `develop`: `feat(frontend): scaffold Next.js app with shadcn/ui, offline DB, 360px layout, and impeccable design docs`.
+
+---
+
+### 5. Đánh giá sẵn sàng cho Ngày 9 (DAY-009)
+- Khung giao diện Frontend Next.js chuẩn Mobile-First, bộ lưu trữ ngoại tuyến Dexie.js, chuẩn thiết kế Impeccable và API Client đã sẵn sàng.
+- Backend .NET 10 Clean Architecture và Frontend Next.js đã hoàn tất dựng khung.
+- Sẵn sàng bước sang **Ngày 9:** Cấu hình Docker Compose Monorepo (chạy đồng thời Backend .NET 10, Frontend Next.js và Database PostgreSQL) & Thiết lập Môi trường Database.
