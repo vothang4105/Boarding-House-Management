@@ -887,3 +887,118 @@ Hoàn thành biên soạn tài liệu gồm 7 mục chính:
 ### 5. Đánh giá sẵn sàng cho Ngày 10 (DAY-010)
 - Cơ chế hạ tầng EF Core, Npgsql PostgreSQL, Soft Delete và kiểm tra kết nối Database 3 tầng đã hoàn thành và kiểm chứng tự động.
 - Sẵn sàng bước sang **Ngày 10 (Mốc cuối Giai đoạn 1):** Cấu hình Docker Compose Monorepo (chạy đồng thời Backend .NET 10, Frontend Next.js và Database PostgreSQL), thiết lập GitHub Actions CI/CD Pipeline, tiến hành Phase-End Comprehensive Review và Release nhánh `main` mốc `v0.1-phase1`.
+
+
+## [DAY-010] - 2026-11-20 - Đóng gói Docker, Thiết lập CI/CD (GitHub Actions) & Chốt Mốc Giai đoạn Khởi động
+
+### 1. Thông tin chung
+- **Task ID:** DAY-010
+- **Trạng thái:** COMPLETED
+- **Vai trò thực hiện:** Developer Agent
+- **Tài liệu căn cứ:** `docs/planning/daily-plans/DAY-010.md`, `docs/planning/MASTER_PLAN.md`, `README.md`, `AGENTS.md` (Quy tắc #6)
+
+---
+
+### 2. Chi tiết kết quả thực hiện
+
+#### Task 1: Khởi động & Chốt mục tiêu ngày (08:30 – 09:00)
+- Chuyển 4 thẻ công việc của Ngày 10 từ cột `Backlog` sang cột `Today` trên bảng Kanban.
+- Điểm lại các ràng buộc cốt lõi khép lại Giai đoạn 1:
+  - `NFR-13 (Múi giờ hệ thống)`: Cài đặt gói `tzdata` và cấu hình `ENV TZ=Asia/Ho_Chi_Minh` bên trong container Linux để server luôn chạy múi giờ Việt Nam.
+  - `Tự động hóa CI`: Thiết lập GitHub Actions Workflow kiểm thử song song cả Backend (.NET 10) và Frontend (Next.js 16).
+  - `Bảo mật Cloud (NFR-10)`: Rà soát tuyệt đối không nhúng mật khẩu hay secret keys vào Dockerfile hay GitHub Actions.
+  - `Phase 1 Comprehensive Review`: Thực hiện theo Quy tắc #6 trong `AGENTS.md` trước khi bàn giao mốc nền tảng lên nhánh `main`.
+
+#### Task 2: Deep Work 1 – Đóng gói Docker & Thiết lập GitHub Actions CI (09:00 – 12:00)
+- **Dockerfile Đa Tầng cho Backend (`backend/Dockerfile`):**
+  - **Stage 1 (Build):** Dùng `mcr.microsoft.com/dotnet/sdk:10.0`, sao chép toàn bộ tệp `.csproj` trước để tận dụng triệt để cơ chế caching của Docker layer khi restore, sau đó thực thi `dotnet publish -c Release -o /app/publish`.
+  - **Stage 2 (Runtime):** Dùng `mcr.microsoft.com/dotnet/aspnet:10.0`, cài đặt `tzdata`, cấu hình `ENV TZ=Asia/Ho_Chi_Minh` (NFR-13), mở cổng `8080` và thiết lập entrypoint `dotnet MBHMS.WebApi.dll`.
+- **Hoàn thiện Cấu hình `docker-compose.yml`:**
+  - Tích hợp đồng bộ service `backend` kết nối cùng service `postgres:16-alpine`.
+  - Ràng buộc điều kiện `depends_on: { postgres: { condition: service_healthy } }` bảo đảm cơ sở dữ liệu sẵn sàng trước khi Web API khởi chạy.
+  - Cấu hình port mapping `5143:8080`, ánh xạ biến môi trường `ConnectionStrings__DefaultConnection` và múi giờ `Asia/Ho_Chi_Minh`.
+- **Thiết lập GitHub Actions CI (`.github/workflows/ci.yml`):**
+  - Tự động kích hoạt khi có lệnh `push` hoặc tạo `pull_request` vào 2 nhánh `develop` và `main`.
+  - 2 Jobs chạy song song:
+    - `backend-ci`: Setup .NET 10 SDK, `dotnet restore`, `dotnet build --no-restore`, và chạy kiểm thử tự động `dotnet test`.
+    - `frontend-ci`: Setup Node.js 20.x, cài đặt dependencies `npm ci --legacy-peer-deps`, và biên dịch ứng dụng `npm run build`.
+
+#### Task 3: Deep Work 2 – Smoke Deploy Lên Public URL & Tổng kết Giai đoạn 1 (13:30 – 17:00)
+- **Cấu hình CORS Sẵn sàng cho Smoke Deploy:**
+  - Cập nhật `backend/src/MBHMS.WebApi/Program.cs` và `appsettings.json`: Thêm chính sách cho phép các origin của Vercel (`https://*.vercel.app`) và các origin cấu hình linh hoạt qua biến môi trường.
+- **Nâng cấp Toàn diện `README.md`:**
+  - Bổ sung huy hiệu (Badges): GitHub Actions CI status, .NET 10, Next.js 16, PostgreSQL 16, Tailwind CSS, Milestone tag.
+  - Viết chi tiết **Hướng dẫn Khởi chạy Cục bộ (Local Development Guide)**: Yêu cầu môi trường, lệnh `docker compose up -d`, áp dụng migration, và khởi chạy Frontend.
+  - Cập nhật sơ đồ kiến trúc Clean Architecture, cấu trúc Monorepo và bảng tổng kết 10 ngày của Giai đoạn 1.
+- **Quy trình Nghiệm thu Tổng kết Giai đoạn 1 (Phase 1 Review):**
+  - **Build Quality:** Biên dịch sạch toàn bộ Backend .NET 10 (0 Errors, 0 Warnings) và Frontend Next.js (0 Errors, 0 Warnings).
+  - **Test Quality:** 17/17 Unit Tests đạt **100% PASS**.
+  - **Scope & Security Audit:** `scripts/verify-scope.ps1` đạt **PASS**; rà soát an toàn không có credentials nào bị lộ.
+  - **Documentation & RTM Sync:** Đồng bộ và xác nhận tính toàn vẹn của `DEVELOPMENT_LOG.md`, `RTM.md`, và 10 tệp Daily Plans (`DAY-001` đến `DAY-010`).
+
+#### Task 4: Nghiệm thu cuối ngày & Đóng Giai đoạn 1 (Definition of Done) (17:00 – 17:30)
+- **Kiểm toán Scope:** `powershell -File scripts/verify-scope.ps1 -PlanFile docs/planning/daily-plans/DAY-010.md` $\rightarrow$ **[SCOPE AUDIT PASSED]**.
+- **Commit và Push Develop:** Commit toàn bộ cấu hình Docker, CI và README lên nhánh `develop`.
+- **Release Cadence Nhánh Main (Quy tắc #6 AGENTS.md):**
+  - Hợp nhất nhánh `develop` vào nhánh `main`.
+  - Tạo Git Tag chính thức: **`v0.1.0-foundation`**.
+  - Push nhánh `main` và tag lên remote repository.
+- **Kanban Board:** Chuyển toàn bộ 4 thẻ công việc Ngày 10 sang cột `Done`.
+
+---
+
+### 3. Bảng tổng hợp File Changes
+
+| Hành động | File | Mô tả |
+| :---: | :--- | :--- |
+| ✅ Create | `docs/planning/daily-plans/DAY-010.md` | Kế hoạch thực hiện chi tiết Ngày 10 |
+| ✅ Create | `backend/Dockerfile` | Dockerfile đa tầng cho Backend .NET 10 khóa múi giờ UTC+7 |
+| ✅ Create | `.github/workflows/ci.yml` | GitHub Actions CI pipeline kiểm thử song song Backend và Frontend |
+| ✅ Modify | `docker-compose.yml` | Bổ sung service backend kết nối postgres phục vụ chạy local |
+| ✅ Modify | `backend/src/MBHMS.WebApi/Program.cs` | Cấu hình CORS mở rộng hỗ trợ domain Vercel |
+| ✅ Modify | `backend/src/MBHMS.WebApi/appsettings.json` | Khai báo origin template cho Vercel |
+| ✅ Modify | `README.md` | Cập nhật badges CI, hướng dẫn local dev, kiến trúc và tổng kết Phase 1 |
+| ✅ Append | `docs/development/DEVELOPMENT_LOG.md` | Nhật ký phát triển Ngày 10 & Nghiệm thu Giai đoạn 1 |
+
+---
+
+### 4. Kiểm chứng & Đo lường (Quality Gate)
+
+- **Biên dịch Backend Solution:** `dotnet build backend/MBHMS.sln` $\rightarrow$ **Build succeeded (0 Errors, 0 Warnings)**.
+- **Kiểm thử tự động:** `dotnet test backend/MBHMS.sln` $\rightarrow$ **17/17 Tests Passed (100%)**.
+- **Biên dịch Frontend:** `npm run build` $\rightarrow$ **Compiled successfully (0 Errors, 0 Warnings)**.
+- **Kiểm toán Scope:** `scripts/verify-scope.ps1 -PlanFile docs/planning/daily-plans/DAY-010.md` $\rightarrow$ **[SCOPE AUDIT PASSED]**.
+- **Tiêu chí nghiệm thu (Acceptance Criteria):** Đạt 13/13 (100%):
+  - [x] Tệp `backend/Dockerfile` được khởi tạo chuẩn multi-stage build, có cấu hình `tzdata` và `ENV TZ=Asia/Ho_Chi_Minh`.
+  - [x] Tệp `docker-compose.yml` bổ sung service `backend` phụ thuộc vào `postgres`.
+  - [x] Tệp `.github/workflows/ci.yml` cấu hình đầy đủ 2 jobs `backend-ci` và `frontend-ci`.
+  - [x] Cấu hình CORS trong `Program.cs` và `appsettings.json` hỗ trợ gọi API từ domain Vercel.
+  - [x] Tệp `README.md` được nâng cấp toàn diện với badges, hướng dẫn local development, kiến trúc Monorepo và kết quả Phase 1.
+  - [x] Lệnh `dotnet build backend/MBHMS.sln` chạy thành công với 0 Errors, 0 Warnings.
+  - [x] Lệnh `dotnet test backend/MBHMS.sln` chạy toàn bộ 17 tests đạt kết quả 100% PASS.
+  - [x] Lệnh `npm run build` trong thư mục `frontend/` hoàn thành thành công với 0 Errors, 0 Warnings.
+  - [x] Kiểm toán scope bằng script `scripts/verify-scope.ps1` đạt kết quả PASS.
+  - [x] Tuyệt đối không để lộ credentials, database password thật trong bất kỳ file nào được commit lên git.
+  - [x] Thực hiện merge nhánh `develop` vào nhánh `main` và đánh dấu Git Tag `v0.1.0-foundation`.
+  - [x] Nhật ký `docs/development/DEVELOPMENT_LOG.md` được cập nhật đầy đủ (tuân thủ Append-Only).
+  - [x] Mã nguồn được commit chuẩn Conventional Commits lên nhánh `develop` và `main`.
+
+---
+
+### 5. Báo Cáo Tổng Kết Giai Đoạn 1: Khởi Động & Chuẩn Bị (Tuần 1 – 2, Ngày 1 – 10)
+
+| Ngày | Hạng mục công việc cốt lõi | Sản phẩm bàn giao (Deliverables) | Kết quả kiểm chứng |
+| :---: | :--- | :--- | :---: |
+| **DAY-001** | Nghiên cứu SRS, phân loại MoSCoW | Bảng phân loại 48 FRs, danh sách 8 thực thể lõi | ✅ 100% PASS |
+| **DAY-002** | Khởi tạo Git Repo & Workflow | Git Flow (`main`/`develop`), Conventional Commits template | ✅ 100% PASS |
+| **DAY-003** | Xây dựng khung RTM Matrix | `docs/requirements/RTM.md` truy vết 48 FRs sang Sprint | ✅ 100% PASS |
+| **DAY-004** | Thiết lập môi trường Local Dev | .NET 10, Node.js, `docker-compose.yml` PostgreSQL 16 | ✅ 100% PASS |
+| **DAY-005** | Chốt hạ tầng Cloud & Phiếu CR-01 | Supabase DB/Storage, SePay VietQR, Mailtrap, phiếu CR-01 | ✅ 100% PASS |
+| **DAY-006** | Biên soạn Vision & Scope | `02_vision_and_scope.md`, ma trận phân quyền RBAC Matrix | ✅ 100% PASS |
+| **DAY-007** | Dựng khung Backend .NET 10 | Clean Architecture 4 tầng, Swagger JWT, UTC+7, 13 tests | ✅ 100% PASS |
+| **DAY-008** | Dựng khung Frontend Next.js 16 | App Router, shadcn/ui, Dexie.js Offline DB, PRODUCT/DESIGN.md | ✅ 100% PASS |
+| **DAY-009** | Cấu hình EF Core & Npgsql | Migration `InitialCreate`, Soft Delete, CanConnectAsync, 17 tests | ✅ 100% PASS |
+| **DAY-010** | Đóng gói Docker & CI/CD Pipeline | Multi-stage Dockerfile, GitHub Actions CI, README.md, Tag v0.1.0 | ✅ 100% PASS |
+
+**Đánh giá sẵn sàng bước sang Giai đoạn 2 (Ngày 11 – 25):**
+Toàn bộ hạ tầng kỹ thuật, quy chuẩn thiết kế, CI/CD và khung mã nguồn Monorepo đã hoàn thành xuất sắc, ổn định 100%. Sẵn sàng bước sang **Giai đoạn 2: Phân tích nghiệp vụ sâu & Thiết kế Kiến trúc**, bắt đầu với **Ngày 11: Thiết kế Sơ đồ ERD hoàn chỉnh cho toàn bộ hệ thống**.
