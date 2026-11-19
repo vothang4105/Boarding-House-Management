@@ -37,12 +37,26 @@ public class AuditableEntitySaveChangesInterceptor : SaveChangesInterceptor
         var currentTime = _dateTimeProvider.Now;
         var currentUserId = _currentUserService?.UserId;
 
+        // 1. Xử lý Soft Delete cho các thực thể triển khai ISoftDeletable (NFR-11)
+        foreach (var entry in context.ChangeTracker.Entries<ISoftDeletable>())
+        {
+            if (entry.State == EntityState.Deleted)
+            {
+                entry.State = EntityState.Modified;
+                entry.Entity.IsDeleted = true;
+                entry.Entity.DeletedAt = currentTime;
+                entry.Entity.DeletedBy = currentUserId;
+            }
+        }
+
+        // 2. Xử lý lưu vết Audit cho AuditableEntity (NFR-11)
         foreach (var entry in context.ChangeTracker.Entries<AuditableEntity>())
         {
             if (entry.State == EntityState.Added)
             {
                 entry.Entity.CreatedAt = currentTime;
                 entry.Entity.CreatedBy = currentUserId;
+                entry.Entity.IsDeleted = false;
             }
             else if (entry.State == EntityState.Modified || entry.HasChangedOwnedEntities())
             {

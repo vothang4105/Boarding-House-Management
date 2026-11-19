@@ -764,3 +764,126 @@ Hoàn thành biên soạn tài liệu gồm 7 mục chính:
 - Khung giao diện Frontend Next.js chuẩn Mobile-First, bộ lưu trữ ngoại tuyến Dexie.js, chuẩn thiết kế Impeccable và API Client đã sẵn sàng.
 - Backend .NET 10 Clean Architecture và Frontend Next.js đã hoàn tất dựng khung.
 - Sẵn sàng bước sang **Ngày 9:** Cấu hình Docker Compose Monorepo (chạy đồng thời Backend .NET 10, Frontend Next.js và Database PostgreSQL) & Thiết lập Môi trường Database.
+
+
+## [DAY-009] - 2026-11-19 - Cấu hình Entity Framework Core, Kết nối PostgreSQL & Chạy Migration Đầu tiên
+
+### 1. Thông tin chung
+- **Task ID:** DAY-009
+- **Trạng thái:** COMPLETED
+- **Vai trò thực hiện:** Developer Agent
+- **Tài liệu căn cứ:** `docs/planning/daily-plans/DAY-009.md`, `docs/requirements/SRS.md`, `docs/requirements/RTM.md`, `docs/02_vision_and_scope.md`
+
+---
+
+### 2. Chi tiết kết quả thực hiện
+
+#### Task 1: Khởi động & Chốt mục tiêu ngày (08:30 – 09:00)
+- Chuyển 4 thẻ công việc của Ngày 9 từ cột `Backlog` sang cột `Today` trên bảng Kanban.
+- Rà soát các ràng buộc kỹ thuật cốt lõi:
+  - `NFR-03 (Resilience)`: Cấu hình `EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: 5s)` tự động phục hồi kết nối Cloud Supabase.
+  - `NFR-10 (Cloud Backup & An toàn)`: Hướng dẫn cơ chế .NET User Secrets lưu trữ connection string trên máy cá nhân, tuyệt đối không lộ secret lên GitHub.
+  - `NFR-11 (Audit Trail & Soft Delete)`: Triển khai giao diện `ISoftDeletable` và `AuditableEntity` bảo toàn toàn vẹn dữ liệu lịch sử hợp đồng và hóa đơn.
+  - `NFR-12 (Bản địa hóa)`: Chuẩn hóa thông điệp kết nối API và Database bằng tiếng Việt chuẩn mực.
+  - `NFR-13 (Múi giờ Hệ thống)`: Khóa cứng quy ước `timestamp with time zone` đồng bộ với `DateTimeProvider` (UTC+7).
+
+#### Task 2: Deep Work 1 – Thiết kế BaseEntity & Cấu hình AppDbContext (09:00 – 12:00)
+- **Chuẩn hóa Thực thể Nền tảng & Xóa mềm (`MBHMS.Domain/Common/`):**
+  - Tạo `ISoftDeletable.cs`: Khai báo `IsDeleted (bool)`, `DeletedAt (DateTime?)`, `DeletedBy (Guid?)`.
+  - Cập nhật `AuditableEntity.cs`: Kế thừa `BaseEntity` và triển khai `ISoftDeletable`, lưu trữ đầy đủ `CreatedAt`, `CreatedBy`, `UpdatedAt`, `UpdatedBy`, `IsDeleted`, `DeletedAt`, `DeletedBy`.
+- **Thực thể Nghiệp vụ Đầu tiên (`MBHMS.Domain/Entities/Building.cs`):**
+  - Khởi tạo thực thể `Building` kế thừa `AuditableEntity` bám sát `FR-01` và `BR-14` với các thuộc tính: `Name`, `Address`, `TotalRooms`, `ManagerId`, `Description`.
+- **Cấu hình Fluent API Tách biệt (`MBHMS.Infrastructure/Persistence/Configurations/`):**
+  - Tạo `BuildingConfiguration.cs` triển khai `IEntityTypeConfiguration<Building>`:
+    - Bảng `buildings` chuẩn snake_case PostgreSQL.
+    - Cấu hình độ dài trường: `name` (varchar 200, IsRequired), `address` (varchar 500, IsRequired), `total_rooms` (default 0).
+    - Tạo các Index: `IX_buildings_name`, `IX_buildings_manager_id`, `IX_buildings_is_deleted`.
+    - Thiết lập Global Query Filter: `builder.HasQueryFilter(b => !b.IsDeleted);`.
+- **Hợp đồng Truy cập Cơ sở Dữ liệu (`MBHMS.Application/Common/Interfaces/IApplicationDbContext.cs`):**
+  - Khai báo `IQueryable<Building> Buildings { get; }` và `SaveChangesAsync()` giữ cho tầng Application độc lập hoàn toàn với thư viện ngoài.
+- **Hoàn thiện DbContext (`MBHMS.Infrastructure/Persistence/AppDbContext.cs`):**
+  - Triển khai `IApplicationDbContext`, cung cấp `DbSet<Building> Buildings`.
+  - Nạp cấu hình tự động: `modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly)`.
+- **Tự động hóa Xóa mềm qua Interceptor (`AuditableEntitySaveChangesInterceptor.cs`):**
+  - Bổ sung logic tự động bắt chặn `EntityState.Deleted` trên các thực thể `ISoftDeletable`: Chuyển sang `EntityState.Modified`, gán `IsDeleted = true`, `DeletedAt = DateTimeProvider.Now` (UTC+7) và `DeletedBy = currentUserId`.
+- **Cấu hình Npgsql Resilience (`MBHMS.Infrastructure/DependencyInjection.cs`):**
+  - Bật tùy chọn `builder.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(5), errorCodesToAdd: null)`.
+
+#### Task 3: Deep Work 2 – Chạy Migration & Kiểm thử Kết nối Đa Môi trường (13:30 – 17:00)
+- **Hỗ trợ CLI Tooling:** Bổ sung `Microsoft.EntityFrameworkCore.Design` (v10.0.4) vào `MBHMS.WebApi.csproj`.
+- **Sinh Migration Khởi tạo (`InitialCreate`):**
+  - Thực thi thành công lệnh `dotnet ef migrations add InitialCreate --project src/MBHMS.Infrastructure --startup-project src/MBHMS.WebApi --output-dir Persistence/Migrations`.
+  - Tệp migration sinh ra cấu trúc chuẩn xác:
+    - `id`: `uuid` (Primary Key).
+    - `name`: `character varying(200)` (Not Null).
+    - `address`: `character varying(500)` (Not Null).
+    - `total_rooms`: `integer` (Default 0).
+    - `created_at`, `updated_at`, `deleted_at`: `timestamp with time zone`.
+    - `is_deleted`: `boolean` (Default false).
+- **Nâng cấp `GET /api/health`:**
+  - Tiêm `AppDbContext` vào `HealthController.cs`, gọi `await _dbContext.Database.CanConnectAsync()`:
+    - Trả về HTTP 200 kèm `status: Healthy/Degraded`, `database: Connected/Disconnected`, `timeZone: Asia/Ho_Chi_Minh (UTC+7)`.
+- **Đồng bộ Frontend Next.js:**
+  - Bổ sung `database?: string` vào `HealthCheckData` (`frontend/src/types/api.ts`).
+  - Cập nhật trang chủ (`frontend/src/app/page.tsx`): Hiển thị badge trạng thái Database trực quan.
+- **Viết Bộ Unit Tests Mới (`backend/tests/MBHMS.UnitTests/Infrastructure/AppDbContextTests.cs`):**
+  - 4 test cases kiểm thử toàn diện: kế thừa thực thể, cấu hình bảng/index, audit log UTC+7 qua interceptor, và soft delete interception.
+  - Kết quả: **17/17 Unit Tests Passed (100%)**.
+
+#### Task 4: Nghiệm thu cuối ngày (DoD) & Bàn giao (17:00 – 17:30)
+- **Biên dịch Backend:** `dotnet build backend/MBHMS.sln` $\rightarrow$ **Build succeeded (0 Errors, 0 Warnings)**.
+- **Kiểm thử Tự động:** `dotnet test backend/MBHMS.sln` $\rightarrow$ **17/17 Tests Passed (100%)**.
+- **Biên dịch Frontend:** `npm run build` $\rightarrow$ **Compiled successfully (0 Errors, 0 Warnings)**.
+- **Kiểm toán Scope:** `powershell -File scripts/verify-scope.ps1 -PlanFile docs/planning/daily-plans/DAY-009.md` $\rightarrow$ **[SCOPE AUDIT PASSED]**.
+- **Rà soát An toàn Bảo mật:** Không có mật khẩu hay connection string thật nào bị ghi vào source code.
+- **Kanban:** Kéo toàn bộ 4 thẻ công việc Ngày 9 sang cột `Done`.
+
+---
+
+### 3. Bảng tổng hợp File Changes
+
+| Hành động | File | Mô tả |
+| :---: | :--- | :--- |
+| ✅ Create | `docs/planning/daily-plans/DAY-009.md` | Kế hoạch thực hiện chi tiết Ngày 9 |
+| ✅ Create | `backend/src/MBHMS.Domain/Common/ISoftDeletable.cs` | Giao diện xóa mềm (IsDeleted, DeletedAt, DeletedBy) |
+| ✅ Modify | `backend/src/MBHMS.Domain/Common/AuditableEntity.cs` | Bổ sung triển khai ISoftDeletable vào AuditableEntity |
+| ✅ Create | `backend/src/MBHMS.Domain/Entities/Building.cs` | Thực thể mẫu Building (FR-01, BR-14) |
+| ✅ Create | `backend/src/MBHMS.Infrastructure/Persistence/Configurations/BuildingConfiguration.cs` | Cấu hình Fluent API bảng buildings, index và query filter |
+| ✅ Modify | `backend/src/MBHMS.Application/Common/Interfaces/IApplicationDbContext.cs` | Bổ sung IQueryable<Building> Buildings |
+| ✅ Modify | `backend/src/MBHMS.Infrastructure/Persistence/AppDbContext.cs` | Cung cấp DbSet<Building> và nạp cấu hình tự động từ assembly |
+| ✅ Modify | `backend/src/MBHMS.Infrastructure/Persistence/Interceptors/AuditableEntitySaveChangesInterceptor.cs` | Tự động hóa đánh dấu xóa mềm khi thực thi Delete |
+| ✅ Modify | `backend/src/MBHMS.Infrastructure/DependencyInjection.cs` | Cấu hình EnableRetryOnFailure(3, 5s) cho Npgsql |
+| ✅ Modify | `backend/src/MBHMS.WebApi/MBHMS.WebApi.csproj` | Thêm Microsoft.EntityFrameworkCore.Design phục vụ CLI tooling |
+| ✅ Create | `backend/src/MBHMS.Infrastructure/Persistence/Migrations/` (3 files) | Tệp Migration InitialCreate và ModelSnapshot |
+| ✅ Modify | `backend/src/MBHMS.WebApi/Controllers/HealthController.cs` | Nâng cấp kiểm tra kết nối Database qua CanConnectAsync() |
+| ✅ Create | `backend/tests/MBHMS.UnitTests/Infrastructure/AppDbContextTests.cs` | 4 Unit tests kiểm thử DbContext, Soft Delete và Interceptor |
+| ✅ Modify | `frontend/src/types/api.ts` | Bổ sung database?: string vào HealthCheckData |
+| ✅ Modify | `frontend/src/app/page.tsx` | Hiển thị badge trạng thái kết nối Database |
+| ✅ Append | `docs/development/DEVELOPMENT_LOG.md` | Nhật ký phát triển Ngày 9 |
+
+---
+
+### 4. Kiểm chứng & Đo lường (Quality Gate)
+
+- **Biên dịch Solution Backend:** `dotnet build backend/MBHMS.sln` $\rightarrow$ **Build succeeded (0 Errors, 0 Warnings)**.
+- **Kiểm thử tự động:** `dotnet test backend/MBHMS.sln` $\rightarrow$ **17/17 Tests Passed (100%)**.
+- **Biên dịch Frontend:** `npm run build` $\rightarrow$ **Compiled successfully (0 Errors, 0 Warnings)**.
+- **Kiểm toán Scope:** `scripts/verify-scope.ps1 -PlanFile docs/planning/daily-plans/DAY-009.md` $\rightarrow$ **[SCOPE AUDIT PASSED]**.
+- **Tiêu chí nghiệm thu (Acceptance Criteria):** Đạt 11/11 (100%):
+  - [x] Lệnh `dotnet build backend/MBHMS.sln` chạy thành công với 0 Errors, 0 Warnings.
+  - [x] Lệnh `dotnet test backend/MBHMS.sln` thực thi toàn bộ 17 tests đạt PASS.
+  - [x] Tệp migration `InitialCreate` được sinh chuẩn xác trong `Persistence/Migrations/`.
+  - [x] Sẵn sàng lệnh `dotnet ef database update` thực thi cập nhật bảng `buildings` và `__EFMigrationsHistory` trên PostgreSQL.
+  - [x] Schema bảng `buildings` có đầy đủ các trường: `id (uuid)`, `name (varchar)`, `address (varchar)`, `total_rooms (int)`, `manager_id (uuid)`, `is_deleted (bool)`, `created_at (timestamptz)`, `updated_at (timestamptz)`.
+  - [x] Endpoint `GET /api/health` nâng cấp kiểm tra kết nối Database qua `CanConnectAsync()`.
+  - [x] Trang chủ Frontend `http://localhost:3000` cập nhật hiển thị trạng thái kết nối với cả Backend WebApi và Database.
+  - [x] Tuyệt đối không lưu mật khẩu hoặc connection string Supabase thật trong các file git (tuân thủ User Secrets).
+  - [x] Kiểm toán scope bằng script `scripts/verify-scope.ps1` đạt kết quả PASS.
+  - [x] Nhật ký `docs/development/DEVELOPMENT_LOG.md` được cập nhật đầy đủ (tuân thủ Append-Only).
+  - [x] Sẵn sàng commit Git chuẩn Conventional Commits: `feat(infrastructure): cấu hình EF Core với PostgreSQL và áp dụng migration InitialCreate`.
+
+---
+
+### 5. Đánh giá sẵn sàng cho Ngày 10 (DAY-010)
+- Cơ chế hạ tầng EF Core, Npgsql PostgreSQL, Soft Delete và kiểm tra kết nối Database 3 tầng đã hoàn thành và kiểm chứng tự động.
+- Sẵn sàng bước sang **Ngày 10 (Mốc cuối Giai đoạn 1):** Cấu hình Docker Compose Monorepo (chạy đồng thời Backend .NET 10, Frontend Next.js và Database PostgreSQL), thiết lập GitHub Actions CI/CD Pipeline, tiến hành Phase-End Comprehensive Review và Release nhánh `main` mốc `v0.1-phase1`.

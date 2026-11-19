@@ -152,16 +152,24 @@ export default function HomePage() {
               </div>
             ) : health ? (
               <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20 space-y-2">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                   <span className="font-semibold text-sm text-emerald-700 dark:text-emerald-400">
                     Kết nối Backend Thành Công - Trạng thái: {health.status}
                   </span>
-                  <Badge variant="success" className="ml-auto">
-                    200 OK
-                  </Badge>
+                  <div className="flex items-center gap-1.5 ml-auto">
+                    <Badge variant="success">
+                      API: 200 OK
+                    </Badge>
+                    <Badge variant={health.database === "Connected" ? "success" : "warning"}>
+                      DB: {health.database || "Chờ kết nối"}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1 text-emerald-900 dark:text-emerald-200">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs pt-1 text-emerald-900 dark:text-emerald-200">
+                  <div>
+                    Cơ sở dữ liệu: <strong>{health.database === "Connected" ? "PostgreSQL (Đã kết nối)" : "PostgreSQL (Chờ kết nối)"}</strong>
+                  </div>
                   <div>
                     Múi giờ hệ thống: <strong>{health.timeZone || "Asia/Ho_Chi_Minh (UTC+7)"}</strong>
                   </div>

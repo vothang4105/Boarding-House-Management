@@ -18,6 +18,7 @@ export interface PagedResponse<T> {
 
 export interface HealthCheckData {
   status: string;
+  database?: string;
   service: string;
   version: string;
   timeZone: string;

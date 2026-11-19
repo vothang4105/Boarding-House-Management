@@ -31,6 +31,10 @@ public static class DependencyInjection
                 options.UseNpgsql(connectionString, builder =>
                 {
                     builder.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
+                    builder.EnableRetryOnFailure(
+                        maxRetryCount: 3,
+                        maxRetryDelay: TimeSpan.FromSeconds(5),
+                        errorCodesToAdd: null);
                 });
             }
         });
